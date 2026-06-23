@@ -1,0 +1,29 @@
+# ── Secrets ───────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Données locales ───────────────────────────────────
+reports/
+logs/
+*.log
+
+# ── Node ──────────────────────────────────────────────
+node_modules/
+api/node_modules/
+
+# ── Python ────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ── Docker override local ─────────────────────────────
+docker-compose.override.yml
+
+# Divers
+.DS_Store
+Thumbs.db
+*.swp
+.claude/

@@ -1,0 +1,69 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Vérification email</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#07080a;--surface:#0c0e12;--border:#1c2028;--accent:#00d4ff;
+          --green:#22c55e;--red:#ff3d3d;--text-bright:#eef2f7;--text-dim:#3d4a5c;
+          --mono:'JetBrains Mono',monospace;--display:'Syne',sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);font-family:var(--mono);font-size:13px;
+         min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    body::before{content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none}
+    .card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);
+          padding:40px;max-width:420px;width:100%;text-align:center}
+    .logo{font-family:var(--display);font-size:22px;font-weight:800;
+          color:var(--text-bright);text-decoration:none;display:block;margin-bottom:28px}
+    .logo span{color:var(--accent)}
+    .icon{font-size:36px;margin-bottom:16px}
+    h1{font-family:var(--display);font-size:18px;color:var(--text-bright);margin-bottom:10px}
+    p{font-size:12px;color:#8892a0;line-height:1.7;margin-bottom:20px}
+    .btn{display:inline-block;padding:11px 28px;background:var(--accent);color:#07080a;
+         font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1.5px;
+         text-transform:uppercase;text-decoration:none;cursor:pointer;border:none;
+         transition:background .18s}
+    .btn:hover{background:#22dfff}
+    .btn-ghost{background:transparent;color:var(--accent);border:1px solid rgba(0,212,255,.3)}
+    .btn-ghost:hover{background:rgba(0,212,255,.08)}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="/" class="logo">Cyber<span>Brief</span></a>
+    <div id="content">
+      <div class="icon">⏳</div>
+      <h1>Vérification en cours…</h1>
+      <p>Validation de votre lien de vérification.</p>
+    </div>
+  </div>
+  <script>
+    async function verify() {
+      const token = new URLSearchParams(window.location.search).get('token');
+      const el = document.getElementById('content');
+      if (!token) {
+        el.innerHTML = '<div class="icon">❌</div><h1>Lien invalide</h1><p>Ce lien de vérification est invalide ou a expiré.</p><a href="/register" class="btn">Créer un compte</a>';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+        const d = await res.json();
+        if (res.ok) {
+          el.innerHTML = '<div class="icon">✅</div><h1>Email vérifié !</h1><p>Votre compte est activé. Vous pouvez maintenant vous connecter.</p><a href="/login" class="btn">Se connecter →</a>';
+        } else {
+          el.innerHTML = `<div class="icon">❌</div><h1>Lien expiré</h1><p>${d.detail || 'Ce lien est invalide ou a expiré.'}</p><a href="/register" class="btn btn-ghost">Créer un nouveau compte</a>`;
+        }
+      } catch {
+        el.innerHTML = '<div class="icon">⚠️</div><h1>Erreur réseau</h1><p>Impossible de contacter le serveur. Veuillez réessayer.</p>';
+      }
+    }
+    verify();
+  </script>
+</body>
+</html>

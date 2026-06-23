@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Rapports</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07080a;
+      --surface: #0c0e12;
+      --border: #1c2028;
+      --accent: #00d4ff;
+      --accent2: #ff6b35;
+      --red: #ff3d3d;
+      --red-fr: #ED2939;
+      --green: #22c55e;
+      --yellow: #ffd60a;
+      --text: #b8c4d0;
+      --text-dim: #4a5568;
+      --text-bright: #eef2f7;
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; min-height: 100vh; }
+
+    .wrapper { max-width: 700px; margin: 0 auto; padding: 56px 24px 80px; }
+
+    /* HEADER */
+    .logo { font-family: var(--display); font-size: 30px; font-weight: 800; color: var(--text-bright); letter-spacing: -1px; line-height: 1; }
+    .logo span { color: var(--accent); }
+    .tagline { font-size: 10px; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; margin-top: 6px; margin-bottom: 36px; }
+
+    /* STATUS BAR */
+    .status-bar { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 36px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); }
+    .sb-item { display: flex; flex-direction: column; gap: 3px; }
+    .sb-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .sb-value { font-size: 13px; font-weight: 600; color: var(--text-bright); }
+    .sb-value.ok { color: var(--green); }
+    .sb-value.warn { color: var(--yellow); }
+    .pulse { display: inline-block; width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; margin-right: 5px; vertical-align: middle; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{box-shadow:0 0 0 4px rgba(34,197,94,0)} }
+
+    /* SECTION TITLE */
+    .sec-title { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* REPORT LIST */
+    .report-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 40px; }
+
+    .report-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 14px 16px; text-decoration: none; color: inherit;
+      transition: border-color .2s, background .2s;
+    }
+    .report-item:hover { border-color: #2a3f57; background: #0e1620; }
+    .report-item:hover .ri-title { color: var(--accent); }
+
+    .ri-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .ri-dot.daily { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+    .ri-dot.weekly { background: var(--accent2); box-shadow: 0 0 5px var(--accent2); }
+
+    .ri-info { flex: 1; min-width: 0; }
+    .ri-title { font-size: 13px; font-weight: 600; color: var(--text-bright); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .2s; }
+    .ri-meta { font-size: 10px; color: var(--text-dim); display: flex; gap: 12px; flex-wrap: wrap; }
+    .ri-meta .fr { color: #fca5a5; }
+    .ri-meta .warn { color: var(--yellow); }
+
+    .ri-badge { font-size: 9px; padding: 3px 8px; border-radius: 2px; letter-spacing: 1px; flex-shrink: 0; }
+    .badge-daily { background: rgba(0,212,255,.08); color: var(--accent); border: 1px solid rgba(0,212,255,.2); }
+    .badge-weekly { background: rgba(255,107,53,.08); color: #ff8c5a; border: 1px solid rgba(255,107,53,.2); }
+
+    .empty { font-size: 12px; color: var(--text-dim); padding: 24px 0; text-align: center; }
+
+    /* LOADING SKELETON */
+    .skeleton { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; height: 58px; animation: shimmer 1.5s infinite; }
+    @keyframes shimmer { 0%,100%{opacity:.5} 50%{opacity:.8} }
+
+    /* NAV */
+    .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; }
+    .nav-logo { font-family: var(--display); font-size: 30px; font-weight: 800; color: var(--text-bright); letter-spacing: -1px; line-height: 1; }
+    .nav-logo span { color: var(--accent); }
+    .nav-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-nav {
+      padding: 8px 18px; font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 1px; text-transform: uppercase; text-decoration: none;
+      transition: all .18s; cursor: pointer; border: none;
+    }
+    .btn-login { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-login:hover { border-color: #2a3f57; color: var(--text-bright); }
+    .btn-register { background: var(--accent); color: #07080a; }
+    .btn-register:hover { background: #22dfff; box-shadow: 0 0 20px rgba(0,212,255,.25); }
+    .btn-dashboard { background: transparent; color: var(--accent); border: 1px solid rgba(0,212,255,.3); }
+    .btn-dashboard:hover { background: rgba(0,212,255,.08); }
+
+    /* FOOTER */
+    .footer { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 50px; font-size: 10px; color: var(--text-dim); line-height: 2; }
+    .footer strong { color: #2a3f57; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="nav">
+    <div>
+      <div class="nav-logo">Cyber<span>Brief</span></div>
+      <div class="tagline">Veille cyber personnalisée · Rapports automatisés à 21h</div>
+    </div>
+    <div class="nav-actions" id="navActions">
+      <!-- Rempli par JS selon état connexion -->
+    </div>
+  </nav>
+
+  <div class="status-bar">
+    <div class="sb-item">
+      <span class="sb-label">Statut</span>
+      <span class="sb-value ok"><span class="pulse"></span>Opérationnel</span>
+    </div>
+    <div class="sb-item">
+      <span class="sb-label">Fréquence</span>
+      <span class="sb-value">Quotidien (21h)</span>
+    </div>
+    <div class="sb-item">
+      <span class="sb-label">Hebdo</span>
+      <span class="sb-value">Samedi</span>
+    </div>
+    <div class="sb-item">
+      <span class="sb-label">Sources</span>
+      <span class="sb-value warn">22 actives</span>
+    </div>
+  </div>
+
+  <div class="sec-title">Rapports disponibles</div>
+  <div class="report-list" id="reportList">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+
+  <div class="footer">
+    <strong>Sources :</strong> CERT-FR · ANSSI · Zataz · LeMagIT · Ransomware.live · DataBreaches.net<br>
+    Have I Been Pwned · Bleeping Computer · Krebs on Security · Recorded Future · Mandiant · NVD NIST
+  </div>
+</div>
+
+<script>
+  async function loadReports() {
+    const list = document.getElementById('reportList');
+    try {
+      const resp = await fetch('/reports/manifest.json');
+      if (!resp.ok) throw new Error('manifest introuvable');
+      const reports = await resp.json();
+
+      if (!reports.length) {
+        list.innerHTML = '<div class="empty">Aucun rapport disponible.<br>Le premier rapport sera généré ce soir à 21h.</div>';
+        return;
+      }
+
+      list.innerHTML = reports.map(r => {
+        const dotClass = r.type === 'weekly' ? 'weekly' : 'daily';
+        const badgeClass = r.type === 'weekly' ? 'badge-weekly' : 'badge-daily';
+        const badgeLabel = r.type === 'weekly' ? 'HEBDO' : 'QUOTIDIEN';
+        const frBadge = r.breaches_fr > 0
+          ? `<span class="fr">🇫🇷 ${r.breaches_fr} incident(s) FR</span>`
+          : '';
+        return `
+          <a class="report-item" href="/reports/${r.filename}">
+            <div class="ri-dot ${dotClass}"></div>
+            <div class="ri-info">
+              <div class="ri-title">${r.title}</div>
+              <div class="ri-meta">
+                <span>${r.date}</span>
+                <span>${r.articles} articles</span>
+                <span class="warn">🩹 ${r.cves} CVEs</span>
+                ${frBadge}
+              </div>
+            </div>
+            <span class="ri-badge ${badgeClass}">${badgeLabel}</span>
+          </a>`;
+      }).join('');
+
+    } catch (e) {
+      list.innerHTML = '<div class="empty">Aucun rapport disponible pour le moment.<br>Le premier rapport sera généré ce soir à 21h.</div>';
+    }
+  }
+
+  loadReports();
+
+  // Boutons nav selon état connexion
+  (async function initNav() {
+    const nav = document.getElementById('navActions');
+    const access  = sessionStorage.getItem('cb_access');
+    const refresh = localStorage.getItem('cb_refresh') || sessionStorage.getItem('cb_refresh');
+
+    if (access || refresh) {
+      // Tente un refresh silencieux pour vérifier la session
+      try {
+        if (refresh && !access) {
+          const r = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refresh }),
+          });
+          if (r.ok) {
+            const d = await r.json();
+            sessionStorage.setItem('cb_access', d.access_token);
+            if (localStorage.getItem('cb_refresh')) localStorage.setItem('cb_refresh', d.refresh_token);
+          }
+        }
+        nav.innerHTML = `
+          <a href="/dashboard" class="btn-nav btn-dashboard">Mon tableau de bord →</a>`;
+      } catch(_) {
+        showAuthButtons(nav);
+      }
+    } else {
+      showAuthButtons(nav);
+    }
+  })();
+
+  function showAuthButtons(nav) {
+    nav.innerHTML = `
+      <a href="/login"    class="btn-nav btn-login">Se connecter</a>
+      <a href="/register" class="btn-nav btn-register">Créer un compte</a>`;
+  }
+</script>
+</body>
+</html>

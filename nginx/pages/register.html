@@ -1,0 +1,398 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Créer un compte</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#07080a; --surface:#0c0e12; --surface-2:#0f1218;
+      --border:#1c2028; --border-h:#2a3f57;
+      --accent:#00d4ff; --accent-dim:rgba(0,212,255,.1); --accent-glow:rgba(0,212,255,.22);
+      --green:#22c55e; --red:#ff3d3d;
+      --text:#8892a0; --text-mid:#b8c4d0; --text-bright:#eef2f7; --text-dim:#3d4a5c;
+      --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif; --t:.18s ease;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased}
+    body{
+      background:var(--bg);color:var(--text-mid);font-family:var(--mono);font-size:13px;
+      min-height:100vh;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;padding:32px 24px;
+    }
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;
+    }
+    .corner{position:fixed;width:60px;height:60px;border-color:rgba(0,212,255,.12);border-style:solid}
+    .corner-tl{top:20px;left:20px;border-width:1px 0 0 1px}
+    .corner-tr{top:20px;right:20px;border-width:1px 1px 0 0}
+    .corner-bl{bottom:20px;left:20px;border-width:0 0 1px 1px}
+    .corner-br{bottom:20px;right:20px;border-width:0 1px 1px 0}
+
+    .card{
+      position:relative;z-index:1;
+      width:100%;max-width:440px;
+      background:var(--surface);border:1px solid var(--border);
+    }
+    .card::after{
+      content:'';position:absolute;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent);
+      animation:scan 3.5s ease-in-out infinite;pointer-events:none;
+    }
+    @keyframes scan{0%{top:-2px;opacity:.6}100%{top:100%;opacity:0}}
+
+    .card-header{padding:32px 32px 24px;border-bottom:1px solid var(--border)}
+    .logo{font-family:var(--display);font-size:24px;font-weight:800;color:var(--text-bright);
+          letter-spacing:-.5px;text-decoration:none;display:block;margin-bottom:4px}
+    .logo span{color:var(--accent)}
+    .tagline{font-size:10px;color:var(--text-dim);letter-spacing:2.5px;text-transform:uppercase}
+
+    .card-body{padding:24px 32px 32px}
+    .fields{display:flex;flex-direction:column;gap:16px}
+
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+
+    .input-wrap{position:relative}
+    input[type=email],input[type=password]{
+      width:100%;background:var(--surface-2);border:1px solid var(--border);
+      color:var(--text-bright);font-family:var(--mono);font-size:13px;
+      padding:11px 14px;outline:none;transition:border-color var(--t),box-shadow var(--t);
+      -webkit-appearance:none;
+    }
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+    input::placeholder{color:var(--text-dim)}
+    input.err{border-color:var(--red)}
+
+    .eye-btn{
+      position:absolute;right:12px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;color:var(--text-dim);
+      padding:4px;transition:color var(--t);
+    }
+    .eye-btn:hover{color:var(--text-mid)}
+
+    .field-error{font-size:11px;color:var(--red);display:none;margin-top:1px}
+    .field-error.v{display:block}
+
+    /* Password strength */
+    .pwd-strength{
+      display:flex;gap:4px;margin-top:6px;
+    }
+    .pwd-bar{
+      flex:1;height:2px;background:var(--border);
+      transition:background var(--t);
+    }
+    .pwd-bar.weak   {background:#ff3d3d}
+    .pwd-bar.medium {background:var(--yellow)}
+    .pwd-bar.strong {background:var(--green)}
+    .pwd-hint{font-size:10px;color:var(--text-dim);margin-top:4px;min-height:14px}
+
+    /* RGPD consent block */
+    .consent-block{
+      background:var(--surface-2);border:1px solid var(--border);
+      padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+    }
+    .consent-title{
+      font-size:10px;font-weight:600;letter-spacing:1.5px;
+      text-transform:uppercase;color:var(--text-dim);
+    }
+    .consent-text{font-size:11px;color:var(--text);line-height:1.6}
+    .consent-text a{color:var(--accent);text-decoration:none}
+    .consent-text a:hover{text-decoration:underline}
+    .consent-check{display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+    .consent-check input[type=checkbox]{
+      width:14px;height:14px;min-width:14px;margin-top:2px;
+      accent-color:var(--accent);cursor:pointer;
+    }
+    .consent-check span{font-size:12px;color:var(--text-mid);line-height:1.5}
+
+    /* Alert */
+    .alert{
+      padding:11px 14px;font-size:12px;border-left:3px solid;
+      display:none;line-height:1.5;margin-bottom:16px;
+    }
+    .alert.v{display:block}
+    .alert-error{border-color:var(--red);background:rgba(255,61,61,.06);color:#ff7070}
+    .alert-success{border-color:var(--green);background:rgba(34,197,94,.06);color:#4ade80}
+
+    .btn{
+      width:100%;padding:13px;background:var(--accent);color:#07080a;
+      font-family:var(--mono);font-size:12px;font-weight:700;
+      letter-spacing:2px;text-transform:uppercase;border:none;cursor:pointer;
+      transition:all var(--t);display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .btn:hover{background:#22dfff;box-shadow:0 0 24px var(--accent-glow)}
+    .btn:disabled{background:var(--border);color:var(--text-dim);cursor:not-allowed;box-shadow:none}
+
+    .spinner{
+      width:14px;height:14px;border:2px solid rgba(0,0,0,.2);
+      border-top-color:#07080a;border-radius:50%;
+      animation:spin .7s linear infinite;display:none;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .card-footer{
+      padding:18px 32px;border-top:1px solid var(--border);
+      text-align:center;font-size:12px;color:var(--text-dim);
+    }
+    .card-footer a{color:var(--accent);transition:color var(--t)}
+    .card-footer a:hover{color:#22dfff}
+
+    /* Success screen */
+    .success-screen{
+      display:none;text-align:center;padding:32px;
+    }
+    .success-icon{
+      font-size:40px;margin-bottom:16px;
+    }
+    .success-screen h2{
+      font-family:var(--display);font-size:20px;color:var(--text-bright);
+      margin-bottom:10px;
+    }
+    .success-screen p{font-size:12px;color:var(--text);line-height:1.7}
+  </style>
+</head>
+<body>
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <a href="/" class="logo">Cyber<span>Brief</span></a>
+      <div class="tagline">Créer un compte</div>
+    </div>
+
+    <div class="card-body">
+      <!-- Success -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">✉️</div>
+        <h2>Vérifiez vos emails</h2>
+        <p>Un lien de vérification vous a été envoyé.<br>
+           Cliquez dessus pour activer votre compte.<br><br>
+           <span style="color:var(--text-dim);font-size:11px;">Le lien est valable 24 heures.</span>
+        </p>
+      </div>
+
+      <!-- Form -->
+      <div id="formWrap">
+        <div class="alert alert-error" id="alertErr" role="alert"></div>
+
+        <form id="regForm" novalidate>
+          <div class="fields">
+
+            <div class="field">
+              <label class="field-label" for="email">Adresse email</label>
+              <input type="email" id="email" name="email"
+                     placeholder="analyst@domain.com"
+                     autocomplete="email" required>
+              <span class="field-error" id="emailErr"></span>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="password">Mot de passe</label>
+              <div class="input-wrap">
+                <input type="password" id="password" name="password"
+                       placeholder="Minimum 8 caractères"
+                       autocomplete="new-password" required>
+                <button type="button" class="eye-btn" id="eyeBtn1" aria-label="Afficher">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="pwd-strength" id="pwdStrength" aria-hidden="true">
+                <div class="pwd-bar" id="bar1"></div>
+                <div class="pwd-bar" id="bar2"></div>
+                <div class="pwd-bar" id="bar3"></div>
+                <div class="pwd-bar" id="bar4"></div>
+              </div>
+              <div class="pwd-hint" id="pwdHint"></div>
+              <span class="field-error" id="pwdErr"></span>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="confirm">Confirmer le mot de passe</label>
+              <div class="input-wrap">
+                <input type="password" id="confirm" name="confirm"
+                       placeholder="••••••••••"
+                       autocomplete="new-password" required>
+                <button type="button" class="eye-btn" id="eyeBtn2" aria-label="Afficher">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <span class="field-error" id="confirmErr"></span>
+            </div>
+
+            <!-- RGPD Consent Block -->
+            <div class="consent-block">
+              <div class="consent-title">🔒 Données personnelles · RGPD</div>
+              <div class="consent-text">
+                CyberBrief collecte votre adresse email uniquement pour :
+                l'authentification et l'envoi des rapports de veille.<br>
+                Aucune donnée n'est partagée avec des tiers.
+                Vous disposez d'un droit d'accès, rectification et suppression.
+                <a href="/privacy" target="_blank">Politique de confidentialité →</a>
+              </div>
+              <label class="consent-check" id="consentLabel">
+                <input type="checkbox" id="consent" name="consent" required>
+                <span>
+                  J'accepte que CyberBrief traite mon adresse email conformément
+                  au RGPD pour les finalités décrites ci-dessus.
+                  <span style="color:var(--red)">*</span>
+                </span>
+              </label>
+              <span class="field-error" id="consentErr"></span>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">
+              <span class="spinner" id="spinner"></span>
+              <span id="btnText">Créer mon compte →</span>
+            </button>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      Déjà inscrit ? <a href="/login">Se connecter</a>
+    </div>
+  </div>
+
+  <script>
+    // Toggle password 
+    function togglePwd(inputId, btnId) {
+      const inp = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      btn.addEventListener('click', () => {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      });
+    }
+    togglePwd('password', 'eyeBtn1');
+    togglePwd('confirm',  'eyeBtn2');
+
+    // Password strength 
+    const pwdInput = document.getElementById('password');
+    const bars     = [1,2,3,4].map(i => document.getElementById('bar'+i));
+    const pwdHint  = document.getElementById('pwdHint');
+
+    function checkStrength(p) {
+      let score = 0;
+      if (p.length >= 8)  score++;
+      if (p.length >= 12) score++;
+      if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++;
+      if (/[^A-Za-z0-9]/.test(p)) score++;
+      return score;
+    }
+
+    pwdInput.addEventListener('input', () => {
+      const p = pwdInput.value;
+      const s = checkStrength(p);
+      const labels = ['', 'Faible', 'Moyen', 'Fort', 'Très fort'];
+      const classes = ['', 'weak', 'weak', 'medium', 'strong'];
+      bars.forEach((b, i) => {
+        b.className = 'pwd-bar' + (i < s && p.length > 0 ? ' ' + classes[s] : '');
+      });
+      pwdHint.textContent = p.length > 0 ? labels[s] : '';
+      pwdHint.style.color = s <= 1 ? 'var(--red)' : s === 2 ? 'var(--yellow)' : 'var(--green)';
+    });
+
+    // Form 
+    const form      = document.getElementById('regForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner   = document.getElementById('spinner');
+    const btnText   = document.getElementById('btnText');
+    const alertErr  = document.getElementById('alertErr');
+
+    function setLoading(v) {
+      submitBtn.disabled = v;
+      spinner.style.display = v ? 'inline-block' : 'none';
+      btnText.textContent = v ? 'Création…' : 'Créer mon compte →';
+    }
+
+    function showFieldError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.classList.add('v');
+    }
+    function clearErrors() {
+      ['emailErr','pwdErr','confirmErr','consentErr'].forEach(id => {
+        const el = document.getElementById(id);
+        el.textContent = ''; el.classList.remove('v');
+      });
+      alertErr.classList.remove('v');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearErrors();
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm  = document.getElementById('confirm').value;
+      const consent  = document.getElementById('consent').checked;
+
+      let valid = true;
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('emailErr', 'Adresse email invalide'); valid = false;
+      }
+      if (password.length < 8) {
+        showFieldError('pwdErr', 'Minimum 8 caractères'); valid = false;
+      } else if (!/[A-Z]/.test(password)) {
+        showFieldError('pwdErr', 'Au moins une majuscule requise'); valid = false;
+      } else if (!/[0-9]/.test(password)) {
+        showFieldError('pwdErr', 'Au moins un chiffre requis'); valid = false;
+      }
+      if (password !== confirm) {
+        showFieldError('confirmErr', 'Les mots de passe ne correspondent pas'); valid = false;
+      }
+      if (!consent) {
+        showFieldError('consentErr', 'Le consentement RGPD est obligatoire'); valid = false;
+      }
+      if (!valid) return;
+
+      setLoading(true);
+      try {
+        const res = await fetch('/api/auth/register', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email, password, consent_rgpd: true }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alertErr.textContent = data.detail || 'Une erreur est survenue.';
+          alertErr.classList.add('v');
+          setLoading(false);
+          return;
+        }
+
+        // Afficher l'écran de succès
+        document.getElementById('formWrap').style.display = 'none';
+        document.getElementById('successScreen').style.display = 'block';
+
+      } catch(err) {
+        alertErr.textContent = 'Erreur réseau. Veuillez réessayer.';
+        alertErr.classList.add('v');
+        setLoading(false);
+      }
+    });
+
+    document.getElementById('email').focus();
+  </script>
+</body>
+</html>

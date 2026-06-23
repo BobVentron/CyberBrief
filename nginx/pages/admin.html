@@ -1,0 +1,1462 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Administration</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <script src="/js/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#05060a; --surface:#090b10; --surface-2:#0c0f15; --surface-3:#101520;
+      --border:#181e28; --border-h:#253550;
+      --accent:#00d4ff; --accent-dim:rgba(0,212,255,.08); --accent-glow:rgba(0,212,255,.2);
+      --accent2:#ff6b35; --accent3:#a78bfa;
+      --green:#22c55e; --red:#ff3d3d; --yellow:#ffd60a;
+      --text:#6b7888; --text-mid:#a0aab8; --text-bright:#e4eaf2; --text-dim:#2a3545;
+      --mono:'JetBrains Mono',monospace; --display:'Syne',sans-serif; --t:.15s ease;
+    }
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { -webkit-font-smoothing:antialiased; }
+    body { background:var(--bg); color:var(--text-mid); font-family:var(--mono); font-size:12px; min-height:100vh; display:flex; }
+
+    ::-webkit-scrollbar { width:3px; height:3px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border-h); }
+
+    /*  Sidebar  */
+    .sidebar {
+      width:200px; min-height:100vh; flex-shrink:0;
+      background:var(--surface); border-right:1px solid var(--border);
+      display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+    }
+    .sb-brand { padding:20px 18px 16px; border-bottom:1px solid var(--border); }
+    .sb-logo  { font-family:var(--display); font-size:17px; font-weight:800; color:var(--text-bright); letter-spacing:-.5px; }
+    .sb-logo span { color:var(--accent); }
+    .sb-tag   { font-size:9px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+    .sb-nav   { flex:1; padding:14px 0; overflow-y:auto; }
+    .sb-sec   { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); padding:8px 18px 5px; }
+    .sb-item  {
+      display:flex; align-items:center; gap:9px; padding:8px 18px;
+      cursor:pointer; color:var(--text); font-size:11px; border:none; background:none;
+      width:100%; text-align:left; transition:all var(--t); border-right:2px solid transparent;
+    }
+    .sb-item:hover  { background:var(--surface-2); color:var(--text-mid); }
+    .sb-item.active { background:var(--accent-dim); color:var(--accent); border-right-color:var(--accent); }
+    .sb-item .ic    { width:13px; text-align:center; font-style:normal; opacity:.5; font-size:12px; }
+    .sb-item.active .ic { opacity:1; }
+    .sb-footer { padding:14px 18px; border-top:1px solid var(--border); }
+    .sb-status { font-size:10px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+    .pulse { width:5px; height:5px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.4)} 50%{box-shadow:0 0 0 4px rgba(34,197,94,0)} }
+
+    /*  Content  */
+    .content { flex:1; display:flex; flex-direction:column; min-width:0; }
+    .topbar  {
+      position:sticky; top:0; z-index:50;
+      background:var(--surface); border-bottom:1px solid var(--border);
+      padding:0 24px; height:46px;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .topbar-title { font-family:var(--display); font-size:14px; font-weight:700; color:var(--text-bright); }
+    .topbar-right { font-size:10px; color:var(--text-dim); }
+
+    .page { display:none; padding:24px; }
+    .page.active { display:block; }
+
+    /*  KPI Grid  */
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
+    @media(max-width:1000px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+
+    .kpi {
+      background:var(--surface); border:1px solid var(--border);
+      padding:16px; position:relative; overflow:hidden;
+      transition:border-color var(--t);
+    }
+    .kpi:hover { border-color:var(--border-h); }
+    .kpi::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg, var(--kpi-color,var(--accent)), transparent);
+    }
+    .kpi-label  { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px; }
+    .kpi-value  { font-family:var(--display); font-size:26px; font-weight:700; color:var(--kpi-color, var(--text-bright)); line-height:1; }
+    .kpi-sub    { font-size:10px; color:var(--text-dim); margin-top:5px; }
+    .kpi-trend  { font-size:10px; margin-top:4px; }
+    .kpi-trend.up   { color:var(--green); }
+    .kpi-trend.down { color:var(--red); }
+
+    /*  Charts Grid  */
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+    @media(max-width:900px) { .charts-grid { grid-template-columns:1fr; } }
+    .charts-grid.wide { grid-template-columns:2fr 1fr; }
+
+    .chart-card {
+      background:var(--surface); border:1px solid var(--border); padding:18px;
+    }
+    .chart-title {
+      font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+      color:var(--text-dim); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;
+    }
+    .chart-title span { color:var(--accent); font-size:10px; font-family:var(--mono); }
+    .chart-wrap { position:relative; height:160px; }
+    .chart-wrap.tall { height:200px; }
+
+    /*  Section  */
+    .section-head {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;
+    }
+    .section-label {
+      font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim);
+    }
+    .search-input {
+      background:var(--surface); border:1px solid var(--border);
+      color:var(--text-mid); font-family:var(--mono); font-size:11px;
+      padding:6px 12px; outline:none; width:200px; transition:border-color var(--t);
+    }
+    .search-input:focus { border-color:var(--border-h); }
+    .search-input::placeholder { color:var(--text-dim); }
+
+    /*  Table  */
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { border-bottom:1px solid var(--border); }
+    th {
+      padding:8px 10px; text-align:left; font-size:9px; font-weight:600;
+      letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); white-space:nowrap;
+    }
+    tbody tr { border-bottom:1px solid var(--border); transition:background var(--t); }
+    tbody tr:hover { background:var(--surface-2); }
+    td { padding:9px 10px; font-size:11px; color:var(--text-mid); vertical-align:middle; }
+    td:first-child { color:var(--text-bright); }
+
+    .badge {
+      display:inline-block; padding:2px 7px; font-size:9px; letter-spacing:.8px; font-weight:600;
+    }
+    .badge-active  { background:rgba(34,197,94,.08); color:var(--green); border:1px solid rgba(34,197,94,.2); }
+    .badge-pending { background:rgba(255,214,10,.08); color:var(--yellow); border:1px solid rgba(255,214,10,.2); }
+    .badge-admin   { background:rgba(0,212,255,.08);  color:var(--accent); border:1px solid rgba(0,212,255,.2); }
+    .badge-sent    { background:rgba(34,197,94,.08);  color:var(--green);  border:1px solid rgba(34,197,94,.2); }
+    .badge-failed  { background:rgba(255,61,61,.08);  color:var(--red);    border:1px solid rgba(255,61,61,.2); }
+    .badge-daily   { background:rgba(0,212,255,.06);  color:var(--accent); border:1px solid rgba(0,212,255,.15); }
+    .badge-weekly  { background:rgba(255,107,53,.06); color:#ff8c5a;       border:1px solid rgba(255,107,53,.15); }
+
+    .action-btn {
+      padding:3px 9px; background:transparent; border:1px solid var(--border);
+      color:var(--text-dim); font-family:var(--mono); font-size:10px;
+      cursor:pointer; transition:all var(--t);
+    }
+    .action-btn:hover { border-color:var(--border-h); color:var(--text-mid); }
+    .action-btn.del   { border-color:rgba(255,61,61,.2); color:var(--red); }
+    .action-btn.del:hover { background:rgba(255,61,61,.08); border-color:var(--red); }
+
+    .pagination { display:flex; align-items:center; gap:8px; margin-top:14px; justify-content:flex-end; }
+    .pg-btn {
+      padding:5px 11px; background:transparent; border:1px solid var(--border);
+      color:var(--text-mid); font-family:var(--mono); font-size:10px; cursor:pointer;
+      transition:all var(--t);
+    }
+    .pg-btn:hover { border-color:var(--border-h); }
+    .pg-btn:disabled { opacity:.3; cursor:not-allowed; }
+    .pg-info { font-size:10px; color:var(--text-dim); }
+
+    /*  Log stream  */
+    .log-item { display:flex; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+    .log-time   { color:var(--text-dim); white-space:nowrap; min-width:110px; font-size:10px; }
+    .log-action { color:var(--accent); font-weight:600; min-width:130px; font-size:11px; }
+    .log-ip     { color:var(--text-dim); font-size:10px; min-width:90px; }
+    .log-detail { color:var(--text); font-size:10px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /*  Cost table  */
+    .cost-row td:last-child { color:var(--yellow); font-weight:600; }
+
+    /*  Summary stat row  */
+    .stat-row {
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;
+    }
+    .stat-pill {
+      background:var(--surface); border:1px solid var(--border);
+      padding:8px 14px; display:flex; flex-direction:column; gap:3px; min-width:120px;
+    }
+    .sp-label { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-dim); }
+    .sp-value { font-family:var(--display); font-size:16px; font-weight:700; color:var(--text-bright); }
+
+    .spinner {
+      width:18px; height:18px; border:2px solid rgba(0,212,255,.15);
+      border-top-color:var(--accent); border-radius:50%;
+      animation:spin .7s linear infinite; margin:32px auto; display:block;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .empty-state {
+      text-align:center; padding:32px; color:var(--text-dim); font-size:11px;
+      background:var(--surface); border:1px solid var(--border);
+    }
+
+    /*  Planification  */
+    .plan-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    @media(max-width:900px) { .plan-grid { grid-template-columns:1fr; } }
+
+    .plan-card {
+      background:var(--surface); border:1px solid var(--border); padding:20px;
+    }
+    .plan-card-title {
+      font-size:9px; letter-spacing:2px; text-transform:uppercase;
+      color:var(--text-dim); font-weight:600; margin-bottom:16px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .plan-card-title::after {
+      content:''; flex:1; height:1px; background:var(--border);
+    }
+
+    .form-row { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+    .form-label { font-size:10px; color:var(--text-dim); letter-spacing:.5px; }
+    .form-input, .form-select {
+      background:var(--surface-2); border:1px solid var(--border);
+      color:var(--text-mid); font-family:var(--mono); font-size:12px;
+      padding:8px 12px; outline:none; width:100%;
+      transition:border-color var(--t);
+      -webkit-appearance:none; appearance:none;
+    }
+    .form-select {
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a5568' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 10px center;
+      padding-right:28px; cursor:pointer;
+    }
+    .form-input:focus, .form-select:focus { border-color:var(--border-h); color:var(--text-bright); }
+    .form-input::placeholder { color:var(--text-dim); }
+
+    .form-radio-group { display:flex; flex-direction:column; gap:6px; }
+    .form-radio {
+      display:flex; align-items:center; gap:8px; cursor:pointer;
+      font-size:11px; color:var(--text-mid); padding:5px 0;
+    }
+    .form-radio input[type=radio] { accent-color:var(--accent); cursor:pointer; }
+    .form-radio:hover { color:var(--text-bright); }
+
+    .form-hint { font-size:10px; color:var(--text-dim); margin-top:4px; }
+
+    .btn-primary {
+      background:var(--accent); color:#07080a; font-family:var(--mono);
+      font-size:11px; font-weight:700; letter-spacing:1px;
+      padding:9px 18px; border:none; cursor:pointer;
+      transition:opacity var(--t); text-transform:uppercase;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-primary:hover { opacity:.85; }
+    .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+
+    .btn-danger {
+      background:transparent; color:var(--red); font-family:var(--mono);
+      font-size:11px; font-weight:700; letter-spacing:1px;
+      padding:9px 18px; border:1px solid rgba(255,61,61,.3); cursor:pointer;
+      transition:all var(--t); text-transform:uppercase;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-danger:hover { background:rgba(255,61,61,.08); border-color:var(--red); }
+    .btn-danger:disabled { opacity:.4; cursor:not-allowed; }
+
+    .status-card {
+      background:var(--surface-2); border:1px solid var(--border);
+      padding:16px; margin-bottom:16px;
+      display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    }
+    @media(max-width:700px) { .status-card { grid-template-columns:1fr 1fr; } }
+    .sc-item { display:flex; flex-direction:column; gap:4px; }
+    .sc-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-dim); }
+    .sc-value { font-family:var(--display); font-size:14px; font-weight:700; color:var(--text-bright); }
+    .sc-value.running { color:var(--yellow); }
+    .sc-value.success { color:var(--green); }
+    .sc-value.error   { color:var(--red); }
+    .sc-value.idle    { color:var(--text-dim); }
+
+    .trigger-zone {
+      display:flex; align-items:center; gap:12px;
+      padding:16px; background:var(--surface); border:1px solid var(--border);
+      margin-bottom:16px;
+    }
+    .trigger-info { flex:1; }
+    .trigger-title { font-size:12px; color:var(--text-bright); font-weight:600; margin-bottom:2px; }
+    .trigger-sub   { font-size:10px; color:var(--text-dim); }
+
+    .toast {
+      position:fixed; bottom:20px; right:20px; z-index:999;
+      padding:10px 16px; font-size:11px; font-family:var(--mono);
+      border:1px solid; display:none; max-width:300px;
+    }
+    .toast.ok  { background:rgba(34,197,94,.1); border-color:rgba(34,197,94,.3); color:var(--green); }
+    .toast.err { background:rgba(255,61,61,.1);  border-color:rgba(255,61,61,.3);  color:var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo">Cyber<span>Brief</span></div>
+    <div class="sb-tag">Administration</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Tableau de bord</div>
+    <button class="sb-item active" data-page="dashboard"><i class="ic">◈</i> Vue d'ensemble</button>
+    <button class="sb-item" data-page="costs"><i class="ic">◎</i> Coûts API Claude</button>
+    <div class="sb-sec">Automatisation</div>
+    <button class="sb-item" data-page="planification"><i class="ic">⏱</i> Planification</button>
+    <button class="sb-item" data-page="logs"><i class="ic">▸</i> Logs en direct</button>
+    <div class="sb-sec">Contenu</div>
+    <button class="sb-item" data-page="rapports"><i class="ic">◧</i> Rapports</button>
+    <button class="sb-item" data-page="sources"><i class="ic">◈</i> Santé sources</button>
+    <div class="sb-sec">Gestion</div>
+    <button class="sb-item" data-page="recipients"><i class="ic">◎</i> Destinataires</button>
+    <button class="sb-item" data-page="users"><i class="ic">◉</i> Utilisateurs</button>
+    <button class="sb-item" data-page="maillogs"><i class="ic">◫</i> Logs email</button>
+    <button class="sb-item" data-page="audit"><i class="ic">◌</i> Journal d'audit</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-status">
+      <div class="pulse"></div>
+      <span id="sidebarStatus">Chargement…</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Content -->
+<div class="content">
+  <div class="topbar">
+    <div class="topbar-title" id="topbarTitle">Vue d'ensemble</div>
+    <div class="topbar-right" id="topbarTime"></div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="page active" id="page-dashboard">
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi" style="--kpi-color:var(--accent)">
+        <div class="kpi-label">Utilisateurs actifs</div>
+        <div class="kpi-value" id="k-active">—</div>
+        <div class="kpi-sub" id="k-active-sub">— total</div>
+        <div class="kpi-trend up" id="k-active-trend"></div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--green)">
+        <div class="kpi-label">Emails envoyés</div>
+        <div class="kpi-value" id="k-mails">—</div>
+        <div class="kpi-sub" id="k-mails-sub">— ce mois</div>
+        <div class="kpi-trend" id="k-mails-trend"></div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--yellow)">
+        <div class="kpi-label">Coût API ce mois</div>
+        <div class="kpi-value" id="k-cost">—</div>
+        <div class="kpi-sub" id="k-cost-sub">total cumulé : —</div>
+        <div class="kpi-trend" id="k-cost-trend"></div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--accent3)">
+        <div class="kpi-label">Rapports générés</div>
+        <div class="kpi-value" id="k-reports">—</div>
+        <div class="kpi-sub" id="k-reports-sub">moy. — tokens/rapport</div>
+        <div class="kpi-trend" id="k-reports-trend"></div>
+      </div>
+    </div>
+
+    <!-- Charts row 1 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Connexions · 30j <span id="lbl-activity"></span></div>
+        <div class="chart-wrap"><canvas id="chartActivity"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Inscriptions · 30j <span id="lbl-users"></span></div>
+        <div class="chart-wrap"><canvas id="chartUsers"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 2 -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Emails envoyés · 30j <span id="lbl-mails"></span></div>
+        <div class="chart-wrap"><canvas id="chartMails"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Coût API · 30j <span id="lbl-costs"></span></div>
+        <div class="chart-wrap"><canvas id="chartCosts"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Costs -->
+  <div class="page" id="page-costs">
+    <div class="stat-row" id="costStats"></div>
+
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Coût USD par jour</div>
+      <div class="chart-wrap tall"><canvas id="chartCostFull"></canvas></div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Tokens consommés par jour</div>
+      <div class="chart-wrap tall"><canvas id="chartTokensFull"></canvas></div>
+    </div>
+
+    <div class="section-head" style="margin-top:20px">
+      <div class="section-label">Détail des rapports</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Rapport</th><th>Type</th><th>Modèle</th><th>Tokens in</th><th>Tokens out</th><th>Total</th><th>Coût USD</th></tr>
+        </thead>
+        <tbody id="costTableBody"><tr><td colspan="8"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Users -->
+  <div class="page" id="page-users">
+    <div class="section-head">
+      <div class="section-label">Utilisateurs</div>
+      <input type="text" class="search-input" id="userSearch" placeholder="Rechercher email…">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Email</th><th>Statut</th><th>Rôle</th><th>Inscrit le</th><th>Dernière connexion</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="usersTableBody"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="usersPagination"></div>
+  </div>
+
+  <!-- Mail logs -->
+  <div class="page" id="page-maillogs">
+    <div class="section-head"><div class="section-label">Historique emails</div></div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Destinataire</th><th>Rapport</th><th>Type</th><th>Statut</th></tr>
+        </thead>
+        <tbody id="mailTableBody"><tr><td colspan="5"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="mailPagination"></div>
+  </div>
+
+  <!-- Planification -->
+  <div class="page" id="page-planification">
+
+    <!-- Status dernier run -->
+    <div class="status-card" id="planStatus">
+      <div class="sc-item"><div class="sc-label">Statut</div><div class="sc-value" id="ps-status">—</div></div>
+      <div class="sc-item"><div class="sc-label">Dernier run</div><div class="sc-value" style="font-size:12px" id="ps-last">—</div></div>
+      <div class="sc-item"><div class="sc-label">Articles</div><div class="sc-value" id="ps-articles">—</div></div>
+      <div class="sc-item"><div class="sc-label">CVEs</div><div class="sc-value" id="ps-cves">—</div></div>
+    </div>
+
+    <!-- Prochain run -->
+    <div class="trigger-zone">
+      <div class="trigger-info">
+        <div class="trigger-title">Prochain déclenchement planifié</div>
+        <div class="trigger-sub" id="ps-next">Chargement…</div>
+      </div>
+      <button class="btn-danger" id="btnTrigger" onclick="triggerNow()">
+        ⚡ Déclencher maintenant
+      </button>
+    </div>
+
+    <div class="plan-grid" style="grid-template-columns:1fr 1fr 1fr">
+
+      <!-- Carte planning quotidien -->
+      <div class="plan-card">
+        <div class="plan-card-title">📰 Brief Quotidien</div>
+        <p style="font-size:10px;color:var(--text-dim);margin-bottom:14px">
+          Dernières 24h — articles + CVEs
+        </p>
+
+        <div class="form-row">
+          <div class="form-label">Heure d'envoi</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" class="form-input" id="dHour"
+                   min="0" max="23" style="width:70px;text-align:center" placeholder="21">
+            <span style="color:var(--text-dim);font-size:16px">:</span>
+            <input type="number" class="form-input" id="dMin"
+                   min="0" max="59" style="width:70px;text-align:center" placeholder="00">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">Jours</div>
+          <div class="form-radio-group">
+            <label class="form-radio"><input type="radio" name="dDays" value="1-5" checked> Lun – Ven</label>
+            <label class="form-radio"><input type="radio" name="dDays" value="*"> Tous les jours</label>
+            <label class="form-radio"><input type="radio" name="dDays" value="1-6"> Lun – Sam</label>
+            <label class="form-radio"><input type="radio" name="dDays" value="custom"> Personnalisé</label>
+          </div>
+        </div>
+
+        <div class="form-row" id="dCustomRow" style="display:none">
+          <div class="form-label">Expression cron</div>
+          <input type="text" class="form-input" id="dCustom" placeholder="0 21 * * 1-5" maxlength="50">
+          <div class="form-hint">min h j m j-semaine</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">Résultante</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--accent);
+                      background:var(--surface-2);border:1px solid var(--border);
+                      padding:8px 12px" id="dPreview">0 21 * * 1-5</div>
+        </div>
+
+        <button class="btn-primary" onclick="saveScheduleDaily()">Enregistrer</button>
+      </div>
+
+      <!-- Carte planning hebdomadaire -->
+      <div class="plan-card">
+        <div class="plan-card-title">📆 Récap Hebdomadaire</div>
+        <p style="font-size:10px;color:var(--text-dim);margin-bottom:14px">
+          7 derniers jours — synthèse complète
+        </p>
+
+        <div class="form-row">
+          <div class="form-label">Heure d'envoi</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" class="form-input" id="wHour"
+                   min="0" max="23" style="width:70px;text-align:center" placeholder="21">
+            <span style="color:var(--text-dim);font-size:16px">:</span>
+            <input type="number" class="form-input" id="wMin"
+                   min="0" max="59" style="width:70px;text-align:center" placeholder="00">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">Jour</div>
+          <div class="form-radio-group">
+            <label class="form-radio"><input type="radio" name="wDays" value="6" checked> Samedi</label>
+            <label class="form-radio"><input type="radio" name="wDays" value="0"> Dimanche</label>
+            <label class="form-radio"><input type="radio" name="wDays" value="5"> Vendredi</label>
+            <label class="form-radio"><input type="radio" name="wDays" value="custom"> Personnalisé</label>
+          </div>
+        </div>
+
+        <div class="form-row" id="wCustomRow" style="display:none">
+          <div class="form-label">Expression cron</div>
+          <input type="text" class="form-input" id="wCustom" placeholder="0 21 * * 6" maxlength="50">
+          <div class="form-hint">min h j m j-semaine</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">Résultante</div>
+          <div style="font-family:var(--mono);font-size:12px;color:var(--accent);
+                      background:var(--surface-2);border:1px solid var(--border);
+                      padding:8px 12px" id="wPreview">0 21 * * 6</div>
+        </div>
+
+        <button class="btn-primary" onclick="saveScheduleWeekly()">Enregistrer</button>
+      </div>
+
+      <!-- Carte modèle Claude -->
+      <div class="plan-card">
+        <div class="plan-card-title">🤖 Modèle Claude</div>
+
+        <div class="form-row">
+          <div class="form-label">Modèle utilisé pour la génération</div>
+          <select class="form-select" id="modelSelect">
+            <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Recommandé (~$0.05/rapport)</option>
+            <option value="claude-opus-4-8">claude-opus-4-8 — Meilleure qualité (~$0.20/rapport)</option>
+            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Ultra-rapide (~$0.01/rapport)</option>
+          </select>
+          <div class="form-hint" id="modelHint" style="margin-top:8px"></div>
+        </div>
+
+        <button class="btn-primary" onclick="saveModel()">Enregistrer le modèle</button>
+
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <div class="plan-card-title">💰 Tarifs indicatifs</div>
+          <div style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--text-dim)">
+            <div style="display:flex;justify-content:space-between">
+              <span>Sonnet 4.6</span><span style="color:var(--text-mid)">$3 / $15 par MTok</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span>Opus 4.8</span><span style="color:var(--yellow)">$15 / $75 par MTok</span>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span>Haiku 4.5</span><span style="color:var(--green)">$0.8 / $4 par MTok</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- .plan-grid -->
+  </div>
+
+  <!-- Audit -->
+  <div class="page" id="page-audit">
+    <div class="section-head">
+      <div class="section-label">Journal d'audit</div>
+      <input type="text" class="search-input" id="auditSearch" placeholder="Filtrer par action…">
+    </div>
+    <div id="auditList"><div class="spinner"></div></div>
+    <div class="pagination" id="auditPagination"></div>
+  </div>
+
+  <!-- Rapports -->
+  <div class="page" id="page-rapports">
+    <div class="section-head">
+      <div class="section-label">Rapports générés</div>
+      <button class="action-btn" onclick="loadRapports()">↺ Rafraîchir</button>
+    </div>
+    <div id="rapportsList"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Sources -->
+  <div class="page" id="page-sources">
+    <div class="section-head">
+      <div class="section-label">Santé des sources RSS</div>
+      <button class="action-btn" onclick="loadSources()">↺ Rafraîchir</button>
+    </div>
+    <div id="sourcesList"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Logs -->
+  <div class="page" id="page-logs">
+    <div class="section-head">
+      <div class="section-label">Logs — dernière exécution</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="logsStatusBadge" style="font-size:10px;color:var(--text-dim)"></span>
+        <button class="action-btn" id="btnLogsStream" onclick="toggleLogStream()">▶ Suivre en direct</button>
+      </div>
+    </div>
+    <div id="logsLastAt" style="font-size:10px;color:var(--text-dim);margin-bottom:10px"></div>
+    <pre id="logsOutput" style="
+      background:var(--surface); border:1px solid var(--border);
+      padding:16px; font-size:11px; color:var(--green);
+      max-height:60vh; overflow-y:auto; white-space:pre-wrap;
+      word-break:break-all; min-height:120px; font-family:var(--mono);
+    ">Chargement…</pre>
+  </div>
+
+  <!-- Destinataires -->
+  <div class="page" id="page-recipients">
+    <div class="section-head">
+      <div class="section-label">Destinataires supplémentaires</div>
+    </div>
+    <div style="max-width:560px">
+      <p style="font-size:11px;color:var(--text-dim);margin-bottom:16px">
+        Ces adresses recevront chaque rapport en plus des utilisateurs inscrits.
+        Utile pour des boîtes de surveillance ou des équipes externes.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <input type="email" class="form-input" id="recipientInput"
+               placeholder="adresse@domaine.com" style="flex:1"
+               onkeydown="if(event.key==='Enter') addRecipient()">
+        <button class="btn-primary" onclick="addRecipient()">+ Ajouter</button>
+      </div>
+      <div id="recipientsList"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+</div><!-- .content -->
+
+<!-- Modal aperçu rapport -->
+<div id="previewModal" style="
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.85); align-items:center; justify-content:center;
+">
+  <div style="
+    width:min(900px,95vw); height:90vh;
+    background:var(--surface); border:1px solid var(--border-h);
+    display:flex; flex-direction:column;
+  ">
+    <div style="
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 16px; border-bottom:1px solid var(--border);
+    ">
+      <span id="previewTitle" style="font-size:12px;color:var(--text-bright);font-weight:600"></span>
+      <button onclick="closePreview()"
+              style="background:transparent;border:1px solid var(--border);color:var(--text-mid);
+                     padding:4px 12px;cursor:pointer;font-family:var(--mono);font-size:11px">
+        ✕ Fermer
+      </button>
+    </div>
+    <iframe id="previewFrame" style="flex:1;border:none;background:#fff"></iframe>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Config 
+const ADMIN_TOKEN = window.CYBERBRIEF_ADMIN_TOKEN || '';
+
+async function api(path) {
+  const r = await fetch('/api' + path, { headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function apiCall(method, path, body) {
+  const r = await fetch('/api' + path, {
+    method,
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return r.json();
+}
+async function apiPost(path, body) { return apiCall('PATCH', path, body); }
+async function apiDelete(path) {
+  return fetch('/api' + path, { method: 'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+}
+
+function showToast(msg, ok = true) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (ok ? 'ok' : 'err');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3500);
+}
+
+// Chart.js global defaults 
+Chart.defaults.color = '#3d4a5c';
+Chart.defaults.borderColor = '#181e28';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size   = 10;
+
+const CHART_OPTS = (yLabel = '') => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'index', intersect: false },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#0c0f15',
+      borderColor: '#253550',
+      borderWidth: 1,
+      titleColor: '#a0aab8',
+      bodyColor: '#e4eaf2',
+      padding: 10,
+    },
+  },
+  scales: {
+    x: {
+      grid:   { color: '#181e28', drawTicks: false },
+      ticks:  { maxRotation: 0, maxTicksLimit: 7,
+                callback: (_, i, arr) => {
+                  if (i === 0 || i === arr.length-1 || i % Math.ceil(arr.length/6) === 0)
+                    return arr[i]?.label?.slice(5) || '';
+                  return '';
+                }},
+    },
+    y: {
+      grid:   { color: '#181e28' },
+      ticks:  { maxTicksLimit: 5, callback: v => yLabel === '$' ? '$' + v.toFixed(3) : v },
+      min:    0,
+    },
+  },
+});
+
+// Clock 
+function tick() {
+  document.getElementById('topbarTime').textContent =
+    new Date().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' });
+}
+tick(); setInterval(tick, 1000);
+
+// Navigation 
+const TITLES = {
+  dashboard:     'Vue d\'ensemble',
+  costs:         'Coûts API Claude',
+  planification: 'Planification',
+  logs:          'Logs en direct',
+  rapports:      'Rapports générés',
+  sources:       'Santé des sources',
+  recipients:    'Destinataires',
+  users:         'Utilisateurs',
+  maillogs:      'Logs email',
+  audit:         'Journal d\'audit',
+};
+let chartInstances = {};
+
+document.querySelectorAll('.sb-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = btn.dataset.page;
+    document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+    document.getElementById('topbarTitle').textContent = TITLES[p];
+    if (p === 'costs')         loadCosts();
+    if (p === 'users')         loadUsers(1);
+    if (p === 'maillogs')      loadMailLogs(1);
+    if (p === 'audit')         loadAudit(1);
+    if (p === 'planification') loadPlanification();
+    if (p === 'rapports')      loadRapports();
+    if (p === 'sources')       loadSources();
+    if (p === 'logs')          initLogs();
+    if (p === 'recipients')    loadRecipients();
+  });
+});
+
+// Utils 
+function fmt(n) { return n?.toLocaleString('fr-FR') ?? '—'; }
+function fmtDate(s) {
+  if (!s) return '—';
+  return new Date(s).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+}
+function mkChart(id, type, data, opts) {
+  if (chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id)?.getContext('2d');
+  if (!ctx) return;
+  chartInstances[id] = new Chart(ctx, { type, data, options: opts });
+  return chartInstances[id];
+}
+function renderPagination(containerId, current, total, cb) {
+  const c = document.getElementById(containerId);
+  if (!c || total <= 1) { if(c) c.innerHTML=''; return; }
+  c.innerHTML = `
+    <button class="pg-btn" ${current===1?'disabled':''} onclick="${cb.name}(${current-1})">‹ Préc.</button>
+    <span class="pg-info">Page ${current} / ${total}</span>
+    <button class="pg-btn" ${current===total?'disabled':''} onclick="${cb.name}(${current+1})">Suiv. ›</button>
+  `;
+}
+
+// Gradient helper 
+function gradient(ctx, color) {
+  const g = ctx.createLinearGradient(0, 0, 0, 200);
+  g.addColorStop(0, color.replace(')', ', 0.35)').replace('rgb', 'rgba'));
+  g.addColorStop(1, color.replace(')', ', 0)').replace('rgb', 'rgba'));
+  return g;
+}
+
+// Dashboard 
+async function loadDashboard() {
+  try {
+    const [stats, activity, users, mails, costs] = await Promise.all([
+      api('/admin/stats'),
+      api('/admin/charts/activity'),
+      api('/admin/charts/users'),
+      api('/admin/charts/mails'),
+      api('/admin/charts/costs'),
+    ]);
+
+    // KPIs
+    document.getElementById('k-active').textContent   = fmt(stats.users.active);
+    document.getElementById('k-active-sub').textContent = `${fmt(stats.users.total)} inscrits · ${fmt(stats.users.pending)} en attente`;
+    document.getElementById('k-active-trend').textContent = `+${fmt(stats.users.new_7d)} cette semaine`;
+    document.getElementById('k-active-trend').className = 'kpi-trend up';
+
+    document.getElementById('k-mails').textContent    = fmt(stats.mail.sent);
+    document.getElementById('k-mails-sub').textContent = `${fmt(stats.mail.sent_30d)} sur 30j · ${fmt(stats.mail.failed)} échecs`;
+    document.getElementById('k-mails-trend').textContent = stats.mail.failed > 0 ? `⚠ ${stats.mail.failed} échec(s)` : '✓ Aucun échec';
+    document.getElementById('k-mails-trend').className = stats.mail.failed > 0 ? 'kpi-trend down' : 'kpi-trend up';
+
+    const costM = stats.api.cost_this_month_usd;
+    document.getElementById('k-cost').textContent   = `$${costM.toFixed(3)}`;
+    document.getElementById('k-cost-sub').textContent = `total cumulé : $${stats.api.total_cost_usd.toFixed(3)}`;
+
+    document.getElementById('k-reports').textContent  = fmt(stats.api.total_reports);
+    document.getElementById('k-reports-sub').textContent = `moy. ${fmt(stats.api.avg_input_tokens + stats.api.avg_output_tokens)} tokens/rapport`;
+
+    document.getElementById('sidebarStatus').textContent = `${stats.users.active} actifs`;
+
+    // Chart activity
+    const actCtx = document.getElementById('chartActivity').getContext('2d');
+    mkChart('chartActivity', 'line', {
+      labels: activity.labels,
+      datasets: [{
+        data: activity.datasets[0].data, tension: .4, borderWidth: 2,
+        borderColor: '#00d4ff', pointRadius: 0, pointHoverRadius: 4,
+        backgroundColor: gradient(actCtx, 'rgb(0, 212, 255)'), fill: true,
+      }],
+    }, CHART_OPTS());
+    document.getElementById('lbl-activity').textContent =
+      `${activity.datasets[0].data.reduce((a,b)=>a+b,0)} total`;
+
+    // Chart users
+    const usrCtx = document.getElementById('chartUsers').getContext('2d');
+    mkChart('chartUsers', 'bar', {
+      labels: users.labels,
+      datasets: [{
+        data: users.datasets[0].data, borderWidth: 0,
+        backgroundColor: 'rgba(167, 139, 250, 0.6)',
+        hoverBackgroundColor: 'rgba(167, 139, 250, 0.9)',
+      }],
+    }, CHART_OPTS());
+    document.getElementById('lbl-users').textContent =
+      `+${users.datasets[0].data.reduce((a,b)=>a+b,0)} sur 30j`;
+
+    // Chart mails
+    mkChart('chartMails', 'bar', {
+      labels: mails.labels,
+      datasets: [
+        { label: 'Envoyés', data: mails.datasets[0].data, backgroundColor: 'rgba(34,197,94,.55)',  borderWidth: 0 },
+        { label: 'Échoués', data: mails.datasets[1].data, backgroundColor: 'rgba(255,61,61,.55)',  borderWidth: 0 },
+      ],
+    }, { ...CHART_OPTS(), plugins: { ...CHART_OPTS().plugins, legend: { display: true, labels: { color: '#3d4a5c', boxWidth: 10, padding: 12 } } } });
+    const mailTotal = mails.datasets[0].data.reduce((a,b)=>a+b,0);
+    document.getElementById('lbl-mails').textContent = `${fmt(mailTotal)} envoyés`;
+
+    // Chart costs
+    const costCtx = document.getElementById('chartCosts').getContext('2d');
+    mkChart('chartCosts', 'line', {
+      labels: costs.labels,
+      datasets: [{
+        data: costs.datasets[0].data, tension: .4, borderWidth: 2,
+        borderColor: '#ffd60a', pointRadius: 0, pointHoverRadius: 4,
+        backgroundColor: gradient(costCtx, 'rgb(255, 214, 10)'), fill: true,
+      }],
+    }, CHART_OPTS('$'));
+    const costTotal = costs.datasets[0].data.reduce((a,b)=>a+b,0);
+    document.getElementById('lbl-costs').textContent = `$${costTotal.toFixed(3)} sur 30j`;
+
+  } catch(e) {
+    console.error('Dashboard error:', e);
+    document.getElementById('sidebarStatus').textContent = 'Erreur API';
+  }
+}
+
+// Costs page 
+async function loadCosts() {
+  try {
+    const [stats, costs] = await Promise.all([api('/admin/stats'), api('/admin/charts/costs')]);
+
+    // Summary pills
+    document.getElementById('costStats').innerHTML = `
+      <div class="stat-pill"><div class="sp-label">Coût total cumulé</div><div class="sp-value" style="color:var(--yellow)">$${stats.api.total_cost_usd.toFixed(4)}</div></div>
+      <div class="stat-pill"><div class="sp-label">Ce mois-ci</div><div class="sp-value" style="color:var(--yellow)">$${stats.api.cost_this_month_usd.toFixed(4)}</div></div>
+      <div class="stat-pill"><div class="sp-label">Total rapports</div><div class="sp-value">${fmt(stats.api.total_reports)}</div></div>
+      <div class="stat-pill"><div class="sp-label">Moy. tokens input</div><div class="sp-value">${fmt(stats.api.avg_input_tokens)}</div></div>
+      <div class="stat-pill"><div class="sp-label">Moy. tokens output</div><div class="sp-value">${fmt(stats.api.avg_output_tokens)}</div></div>
+      <div class="stat-pill"><div class="sp-label">Coût moy./rapport</div><div class="sp-value" style="color:var(--yellow)">$${stats.api.total_reports > 0 ? (stats.api.total_cost_usd / stats.api.total_reports).toFixed(4) : '0.0000'}</div></div>
+    `;
+
+    // Cost chart (full)
+    mkChart('chartCostFull', 'line', {
+      labels: costs.labels,
+      datasets: [{
+        data: costs.datasets[0].data, tension: .4, borderWidth: 2,
+        borderColor: '#ffd60a', pointRadius: 2, pointHoverRadius: 5,
+        backgroundColor: 'rgba(255,214,10,.06)', fill: true,
+        pointBackgroundColor: '#ffd60a',
+      }],
+    }, { ...CHART_OPTS('$'), scales: { ...CHART_OPTS('$').scales, y: { ...CHART_OPTS('$').scales.y, ticks: { callback: v => '$' + v.toFixed(4) } } } });
+
+    // Tokens chart (full)
+    mkChart('chartTokensFull', 'bar', {
+      labels: costs.labels,
+      datasets: [{
+        data: costs.datasets[1].data, borderWidth: 0,
+        backgroundColor: 'rgba(167,139,250,.5)',
+        hoverBackgroundColor: 'rgba(167,139,250,.8)',
+      }],
+    }, CHART_OPTS());
+
+    // Detail table
+    const tbody = document.getElementById('costTableBody');
+    if (!costs.detail.length) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Aucun rapport enregistré</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = costs.detail.map(r => `
+      <tr class="cost-row">
+        <td>${r.date}</td>
+        <td style="font-size:10px;color:var(--text-dim);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.report}</td>
+        <td><span class="badge badge-${r.type}">${r.type === 'weekly' ? 'HEBDO' : 'DAILY'}</span></td>
+        <td style="font-size:10px">${r.model.replace('claude-','').replace(/-20\d+/,'')}</td>
+        <td style="color:var(--text-dim)">${fmt(r.input_tokens)}</td>
+        <td style="color:var(--text-dim)">${fmt(r.output_tokens)}</td>
+        <td>${fmt(r.total_tokens)}</td>
+        <td style="color:var(--yellow);font-weight:600">$${r.cost_usd.toFixed(5)}</td>
+      </tr>`).join('');
+
+  } catch(e) { console.error('Costs error:', e); }
+}
+
+// Users 
+let usersPage = 1, usersSearch = '';
+async function loadUsers(page = 1) {
+  usersPage = page;
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = '<tr><td colspan="6"><div class="spinner"></div></td></tr>';
+  try {
+    const params = new URLSearchParams({ page, limit: 20 });
+    if (usersSearch) params.set('search', usersSearch);
+    const d = await api(`/admin/users?${params}`);
+
+    if (!d.users.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Aucun utilisateur</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.users.map(u => `
+      <tr>
+        <td>${u.email}</td>
+        <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-pending'}">${u.is_active ? 'Actif' : 'En attente'}</span></td>
+        <td>${u.is_admin ? '<span class="badge badge-admin">Admin</span>' : '—'}</td>
+        <td>${fmtDate(u.created_at).split(' ')[0]}</td>
+        <td>${fmtDate(u.last_login)}</td>
+        <td style="display:flex;gap:5px">
+          <button class="action-btn" onclick="toggleUser('${u.id}',${!u.is_active})">${u.is_active ? 'Désactiver' : 'Activer'}</button>
+          <button class="action-btn del" onclick="deleteUser('${u.id}','${u.email}')">Suppr.</button>
+        </td>
+      </tr>`).join('');
+
+    renderPagination('usersPagination', page, Math.ceil(d.total / 20), loadUsers);
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--red);padding:16px">Erreur de chargement</td></tr>';
+  }
+}
+
+let searchTimer;
+document.getElementById('userSearch').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  usersSearch = e.target.value;
+  searchTimer = setTimeout(() => loadUsers(1), 350);
+});
+
+async function toggleUser(id, val) {
+  await fetch(`/api/admin/users/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type':'application/json', 'X-Admin-Token': ADMIN_TOKEN },
+    body: JSON.stringify({ is_active: val }),
+  });
+  loadUsers(usersPage);
+}
+async function deleteUser(id, email) {
+  if (!confirm(`Supprimer ${email} ? Irréversible.`)) return;
+  await fetch(`/api/admin/users/${id}`, { method:'DELETE', headers: { 'X-Admin-Token': ADMIN_TOKEN } });
+  loadUsers(usersPage);
+}
+
+// Mail logs 
+async function loadMailLogs(page = 1) {
+  const tbody = document.getElementById('mailTableBody');
+  tbody.innerHTML = '<tr><td colspan="5"><div class="spinner"></div></td></tr>';
+  try {
+    const d = await api(`/admin/mail-logs?page=${page}&limit=25`);
+    if (!d.logs.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state">Aucun log</div></td></tr>'; return; }
+    tbody.innerHTML = d.logs.map(l => `
+      <tr>
+        <td>${fmtDate(l.sent_at)}</td>
+        <td>${l.recipient}</td>
+        <td style="font-size:10px;color:var(--text-dim)">${l.report_file}</td>
+        <td><span class="badge badge-${l.report_type}">${l.report_type === 'weekly' ? 'HEBDO' : 'DAILY'}</span></td>
+        <td><span class="badge badge-${l.status}">${l.status === 'sent' ? '✓ Envoyé' : '✕ Échec'}</span></td>
+      </tr>`).join('');
+    renderPagination('mailPagination', page, Math.ceil(d.total / 25), loadMailLogs);
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="5" style="color:var(--red);padding:16px">Erreur</td></tr>'; }
+}
+
+// Audit 
+let auditFilter = '';
+async function loadAudit(page = 1) {
+  const list = document.getElementById('auditList');
+  list.innerHTML = '<div class="spinner"></div>';
+  try {
+    const params = new URLSearchParams({ page, limit: 40 });
+    if (auditFilter) params.set('action', auditFilter);
+    const d = await api(`/admin/audit?${params}`);
+    if (!d.logs.length) { list.innerHTML = '<div class="empty-state">Aucune entrée</div>'; return; }
+    list.innerHTML = d.logs.map(l => `
+      <div class="log-item">
+        <div class="log-time">${fmtDate(l.created_at)}</div>
+        <div class="log-action">${l.action}</div>
+        <div class="log-ip">${l.ip_address || '—'}</div>
+        <div class="log-detail">${l.user_id ? 'uid:' + l.user_id.slice(0,8)+'…' : 'anon'}${l.details ? ' · '+JSON.stringify(l.details) : ''}</div>
+      </div>`).join('');
+    renderPagination('auditPagination', page, Math.ceil(d.total / 40), loadAudit);
+  } catch(e) { list.innerHTML = '<div class="empty-state" style="color:var(--red)">Erreur</div>'; }
+}
+
+let auditTimer;
+document.getElementById('auditSearch').addEventListener('input', e => {
+  clearTimeout(auditTimer);
+  auditFilter = e.target.value;
+  auditTimer = setTimeout(() => loadAudit(1), 350);
+});
+
+// Planification 
+function cronToUi(cron) {
+  const parts = cron.trim().split(/\s+/);
+  if (parts.length !== 5) return null;
+  const [min, hour, , , days] = parts;
+  return { hour: parseInt(hour) || 21, min: parseInt(min) || 0, days };
+}
+
+function buildCron(prefix) {
+  const dayMode = document.querySelector(`input[name=${prefix}Days]:checked`)?.value || '*';
+  if (dayMode === 'custom') return document.getElementById(prefix + 'Custom').value.trim();
+  const h = parseInt(document.getElementById(prefix + 'Hour').value) || 21;
+  const m = parseInt(document.getElementById(prefix + 'Min').value)  || 0;
+  return `${m} ${h} * * ${dayMode}`;
+}
+
+function updatePreview(prefix) {
+  document.getElementById(prefix + 'Preview').textContent = buildCron(prefix) || '—';
+}
+
+function wirePrefix(prefix) {
+  [prefix+'Hour', prefix+'Min', prefix+'Custom'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => updatePreview(prefix));
+  });
+  document.querySelectorAll(`input[name=${prefix}Days]`).forEach(r => {
+    r.addEventListener('change', () => {
+      document.getElementById(prefix + 'CustomRow').style.display =
+        r.value === 'custom' ? 'flex' : 'none';
+      updatePreview(prefix);
+    });
+  });
+}
+wirePrefix('d');
+wirePrefix('w');
+
+function fmtStatus(s) {
+  if (!s || s === 'idle')    return '<span class="sc-value idle">Inactif</span>';
+  if (s === 'running')       return '<span class="sc-value running">⟳ En cours…</span>';
+  if (s === 'success')       return '<span class="sc-value success">✓ Succès</span>';
+  if (s.startsWith('warning')) return `<span class="sc-value" style="color:var(--yellow)">⚠ ${s}</span>`;
+  if (s.startsWith('error')) return `<span class="sc-value error">✕ Erreur</span>`;
+  return `<span class="sc-value">${s}</span>`;
+}
+
+function fmtNext(iso) {
+  if (!iso) return 'Inconnu';
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = d - now;
+  if (diffMs < 0) return 'Imminent';
+  const diffH = Math.floor(diffMs / 3600000);
+  const diffM = Math.floor((diffMs % 3600000) / 60000);
+  const timeStr = d.toLocaleString('fr-FR', { weekday:'short', hour:'2-digit', minute:'2-digit' });
+  if (diffH < 1)  return `Dans ${diffM} min — ${timeStr}`;
+  if (diffH < 24) return `Dans ${diffH}h${diffM > 0 ? diffM+'min' : ''} — ${timeStr}`;
+  return `${timeStr}`;
+}
+
+function fillCronControls(prefix, cron, defaultDaysOptions) {
+  const ui = cronToUi(cron);
+  if (!ui) {
+    document.querySelector(`input[name=${prefix}Days][value=custom]`).checked = true;
+    document.getElementById(prefix + 'CustomRow').style.display = 'flex';
+    document.getElementById(prefix + 'Custom').value = cron;
+  } else {
+    document.getElementById(prefix + 'Hour').value = ui.hour;
+    document.getElementById(prefix + 'Min').value  = String(ui.min).padStart(2, '0');
+    const radios = document.querySelectorAll(`input[name=${prefix}Days]`);
+    let matched = false;
+    radios.forEach(r => {
+      if (r.value === ui.days) { r.checked = true; matched = true; }
+      else r.checked = false;
+    });
+    if (!matched) {
+      document.querySelector(`input[name=${prefix}Days][value=custom]`).checked = true;
+      document.getElementById(prefix + 'CustomRow').style.display = 'flex';
+      document.getElementById(prefix + 'Custom').value = cron;
+    } else {
+      document.getElementById(prefix + 'CustomRow').style.display = 'none';
+    }
+  }
+  updatePreview(prefix);
+}
+
+async function loadPlanification() {
+  try {
+    const s = await api('/admin/settings');
+
+    document.getElementById('ps-status').innerHTML     = fmtStatus(s.last_run_status);
+    document.getElementById('ps-last').textContent     = s.last_run_at ? fmtDate(s.last_run_at) : '—';
+    document.getElementById('ps-articles').textContent = s.last_run_articles || '0';
+    document.getElementById('ps-cves').textContent     = s.last_run_cves     || '0';
+    document.getElementById('ps-next').textContent     = fmtNext(s.next_run);
+
+    fillCronControls('d', s.cron_schedule_daily  || '0 21 * * 1-5');
+    fillCronControls('w', s.cron_schedule_weekly || '0 21 * * 6');
+
+    const modelSel = document.getElementById('modelSelect');
+    if (s.claude_model) modelSel.value = s.claude_model;
+    updateModelHint();
+
+  } catch(e) {
+    console.error('Planification load error:', e);
+    showToast('Erreur de chargement des paramètres', false);
+  }
+}
+
+function updateModelHint() {
+  const hints = {
+    'claude-sonnet-4-6':        'Meilleur rapport qualité/coût. Recommandé pour une utilisation quotidienne.',
+    'claude-opus-4-8':          'Le plus puissant. Rapports très détaillés. Coût ~4× supérieur au Sonnet.',
+    'claude-haiku-4-5-20251001':'Ultra-rapide et économique. Rapports plus courts.',
+  };
+  const v = document.getElementById('modelSelect').value;
+  document.getElementById('modelHint').textContent = hints[v] || '';
+}
+document.getElementById('modelSelect')?.addEventListener('change', updateModelHint);
+
+async function saveScheduleDaily() {
+  const cron = buildCron('d');
+  if (!cron) { showToast('Expression cron invalide', false); return; }
+  try {
+    const r = await apiCall('PUT', '/admin/settings/cron_schedule_daily', { value: cron });
+    if (r.ok) { showToast(`Brief quotidien : ${cron}`); setTimeout(loadPlanification, 1000); }
+    else showToast(r.detail || 'Erreur', false);
+  } catch(e) { showToast('Erreur réseau', false); }
+}
+
+async function saveScheduleWeekly() {
+  const cron = buildCron('w');
+  if (!cron) { showToast('Expression cron invalide', false); return; }
+  try {
+    const r = await apiCall('PUT', '/admin/settings/cron_schedule_weekly', { value: cron });
+    if (r.ok) { showToast(`Récap hebdo : ${cron}`); setTimeout(loadPlanification, 1000); }
+    else showToast(r.detail || 'Erreur', false);
+  } catch(e) { showToast('Erreur réseau', false); }
+}
+
+async function saveModel() {
+  const model = document.getElementById('modelSelect').value;
+  try {
+    const r = await apiCall('PUT', '/admin/settings/claude_model', { value: model });
+    if (r.ok) showToast(`Modèle enregistré : ${model}`);
+    else showToast(r.detail || 'Erreur', false);
+  } catch(e) { showToast('Erreur réseau', false); }
+}
+
+async function triggerNow() {
+  const btn = document.getElementById('btnTrigger');
+  btn.disabled = true;
+  btn.textContent = '⟳ Déclenchement en cours…';
+  try {
+    const r = await apiCall('POST', '/admin/trigger');
+    if (r.ok) {
+      showToast('Déclenchement demandé — le rapport sera généré dans ~30 secondes');
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '⚡ Déclencher maintenant';
+        loadPlanification();
+      }, 35000);
+    } else {
+      showToast(r.detail || 'Erreur', false);
+      btn.disabled = false;
+      btn.textContent = '⚡ Déclencher maintenant';
+    }
+  } catch(e) {
+    showToast('Erreur réseau', false);
+    btn.disabled = false;
+    btn.textContent = '⚡ Déclencher maintenant';
+  }
+}
+
+// Rapports 
+const REPORT_BASE = window.location.protocol + '//' + window.location.hostname + ':8080';
+
+async function loadRapports() {
+  const el = document.getElementById('rapportsList');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const list = await api('/admin/reports');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state">Aucun rapport généré pour l\'instant.</div>';
+      return;
+    }
+    el.innerHTML = list.map(r => `
+      <div style="
+        background:var(--surface);border:1px solid var(--border);
+        padding:16px 20px;margin-bottom:8px;
+        display:flex;align-items:center;justify-content:space-between;gap:16px;
+        flex-wrap:wrap;
+      ">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:12px;color:var(--text-bright);font-weight:600;margin-bottom:4px">
+            <span class="badge badge-${r.type}">${r.type === 'weekly' ? 'HEBDO' : 'DAILY'}</span>
+            &nbsp;${r.title}
+          </div>
+          <div style="font-size:10px;color:var(--text-dim)">${r.date}</div>
+          <div style="display:flex;gap:12px;margin-top:6px;font-size:10px;color:var(--text-mid)">
+            <span>📰 ${r.articles} articles</span>
+            <span>🩹 ${r.cves} CVEs</span>
+            <span>🇫🇷 ${r.breaches_fr} FR</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button class="action-btn" onclick="openPreview('${r.filename}','${r.title.replace(/'/g,'\\\'')}')" title="Aperçu">
+            👁 Aperçu
+          </button>
+          <a href="${REPORT_BASE}/reports/${r.filename}" target="_blank"
+             style="text-decoration:none">
+            <button class="action-btn">↗ Ouvrir</button>
+          </a>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state" style="color:var(--red)">Erreur de chargement</div>';
+  }
+}
+
+function openPreview(filename, title) {
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewFrame').src = `${REPORT_BASE}/reports/${filename}`;
+  const m = document.getElementById('previewModal');
+  m.style.display = 'flex';
+}
+function closePreview() {
+  document.getElementById('previewModal').style.display = 'none';
+  document.getElementById('previewFrame').src = '';
+}
+document.getElementById('previewModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closePreview();
+});
+
+// Santé des sources 
+async function loadSources() {
+  const el = document.getElementById('sourcesList');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const list = await api('/admin/sources-health');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state">Aucune donnée — lancez une génération d\'abord.</div>';
+      return;
+    }
+    const ok  = list.filter(s => s.status === 'ok').length;
+    const ko  = list.filter(s => s.status !== 'ok').length;
+    el.innerHTML = `
+      <div class="stat-row" style="margin-bottom:16px">
+        <div class="stat-pill">
+          <div class="sp-label">Sources OK</div>
+          <div class="sp-value" style="color:var(--green)">${ok}</div>
+        </div>
+        <div class="stat-pill">
+          <div class="sp-label">Sources KO</div>
+          <div class="sp-value" style="color:${ko > 0 ? 'var(--red)' : 'var(--text-dim)'}">${ko}</div>
+        </div>
+        <div class="stat-pill">
+          <div class="sp-label">Total</div>
+          <div class="sp-value">${list.length}</div>
+        </div>
+      </div>
+      <table class="data-table" style="width:100%">
+        <thead><tr>
+          <th>Source</th><th>Statut</th><th>Articles</th><th>URL</th><th>Erreur</th>
+        </tr></thead>
+        <tbody>
+          ${list.map(s => `
+            <tr>
+              <td style="font-size:11px;color:var(--text-bright);font-weight:600">${s.name}</td>
+              <td>
+                <span style="
+                  display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;
+                  background:${s.status==='ok' ? 'rgba(34,197,94,.1)' : 'rgba(255,61,61,.1)'};
+                  color:${s.status==='ok' ? 'var(--green)' : 'var(--red)'};
+                  border:1px solid ${s.status==='ok' ? 'rgba(34,197,94,.3)' : 'rgba(255,61,61,.3)'};
+                ">${s.status === 'ok' ? '✓ OK' : '✕ KO'}</span>
+              </td>
+              <td style="font-family:var(--mono);font-size:11px">${s.articles}</td>
+              <td style="font-size:10px;color:var(--text-dim);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                <a href="${s.url}" target="_blank" style="color:var(--text-dim)">${s.url}</a>
+              </td>
+              <td style="font-size:10px;color:var(--red);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                ${s.error || ''}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state" style="color:var(--red)">Erreur de chargement</div>';
+  }
+}
+
+// Logs en direct 
+let _logInterval = null;
+
+function initLogs() {
+  refreshLogs();
+}
+
+async function refreshLogs() {
+  try {
+    const s = await api('/admin/settings');
+    const out = document.getElementById('logsOutput');
+    const log = s.last_run_log || '';
+    out.textContent = log || '(aucun log disponible — lancez une génération)';
+    if (log) out.scrollTop = out.scrollHeight;
+
+    const status = s.last_run_status || 'idle';
+    document.getElementById('logsStatusBadge').innerHTML = fmtStatus(status);
+    document.getElementById('logsLastAt').textContent =
+      s.last_run_at ? 'Dernière exécution : ' + fmtDate(s.last_run_at) : '';
+  } catch(e) {
+    document.getElementById('logsOutput').textContent = 'Erreur de chargement des logs';
+  }
+}
+
+function toggleLogStream() {
+  const btn = document.getElementById('btnLogsStream');
+  if (_logInterval) {
+    clearInterval(_logInterval);
+    _logInterval = null;
+    btn.textContent = '▶ Suivre en direct';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  } else {
+    btn.textContent = '⏹ Arrêter';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    refreshLogs();
+    _logInterval = setInterval(refreshLogs, 2000);
+  }
+}
+
+// Destinataires 
+async function loadRecipients() {
+  const el = document.getElementById('recipientsList');
+  el.innerHTML = '<div class="spinner"></div>';
+  try {
+    const list = await api('/admin/recipients');
+    if (!list.length) {
+      el.innerHTML = '<div class="empty-state">Aucun destinataire ajouté.</div>';
+      return;
+    }
+    el.innerHTML = list.map(email => `
+      <div style="
+        display:flex;align-items:center;justify-content:space-between;
+        background:var(--surface);border:1px solid var(--border);
+        padding:10px 14px;margin-bottom:6px;
+      ">
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text-bright)">${email}</span>
+        <button class="action-btn del" onclick="removeRecipient('${email}')">✕ Supprimer</button>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty-state" style="color:var(--red)">Erreur de chargement</div>';
+  }
+}
+
+async function addRecipient() {
+  const input = document.getElementById('recipientInput');
+  const email = input.value.trim();
+  if (!email) return;
+  try {
+    const r = await apiCall('POST', '/admin/recipients', { email });
+    if (r.ok) {
+      input.value = '';
+      showToast(`${email} ajouté`);
+      loadRecipients();
+    } else {
+      showToast(r.detail || 'Erreur', false);
+    }
+  } catch(e) { showToast('Erreur réseau', false); }
+}
+
+async function removeRecipient(email) {
+  try {
+    const r = await apiCall('DELETE', `/admin/recipients/${encodeURIComponent(email)}`);
+    if (r.ok !== false) {
+      showToast(`${email} supprimé`);
+      loadRecipients();
+    } else {
+      showToast(r.detail || 'Erreur', false);
+    }
+  } catch(e) { showToast('Erreur réseau', false); }
+}
+
+// Init 
+loadDashboard();
+setInterval(loadDashboard, 60000);   // Refresh auto toutes les 60s
+</script>
+</body>
+</html>

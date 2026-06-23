@@ -1,0 +1,588 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Tableau de bord</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#07080a;--surface:#0c0e12;--surface-2:#0f1218;
+      --border:#1c2028;--border-h:#2a3f57;
+      --accent:#00d4ff;--accent-dim:rgba(0,212,255,.1);--accent-glow:rgba(0,212,255,.2);
+      --accent2:#ff6b35;
+      --green:#22c55e;--red:#ff3d3d;--yellow:#ffd60a;
+      --text:#8892a0;--text-mid:#b8c4d0;--text-bright:#eef2f7;--text-dim:#3d4a5c;
+      --mono:'JetBrains Mono',monospace;--display:'Syne',sans-serif;--t:.18s ease;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased}
+    body{background:var(--bg);color:var(--text-mid);font-family:var(--mono);font-size:13px;min-height:100vh}
+
+    /*  Nav  */
+    nav{
+      position:sticky;top:0;z-index:100;
+      background:var(--surface);border-bottom:1px solid var(--border);
+      padding:0 32px;height:52px;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .logo{font-family:var(--display);font-size:20px;font-weight:800;
+          color:var(--text-bright);letter-spacing:-.5px;text-decoration:none}
+    .logo span{color:var(--accent)}
+    .nav-right{display:flex;align-items:center;gap:16px}
+    .nav-email{font-size:11px;color:var(--text-dim)}
+    .nav-btn{
+      padding:6px 14px;background:transparent;border:1px solid var(--border);
+      color:var(--text-mid);font-family:var(--mono);font-size:11px;
+      letter-spacing:1px;cursor:pointer;transition:all var(--t);text-transform:uppercase;
+    }
+    .nav-btn:hover{border-color:var(--border-h);color:var(--text-bright)}
+    .nav-btn.reports-link{border-color:var(--accent-dim);color:var(--accent);
+      text-decoration:none;display:inline-flex;align-items:center}
+    .nav-btn.reports-link:hover{background:var(--accent-dim)}
+
+    /*  Layout  */
+    .main{max-width:860px;margin:0 auto;padding:40px 24px 80px}
+
+    .page-title{
+      font-family:var(--display);font-size:22px;font-weight:800;
+      color:var(--text-bright);letter-spacing:-.5px;margin-bottom:6px;
+    }
+    .page-sub{font-size:11px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:36px}
+
+    /*  Sections  */
+    .section{margin-bottom:36px}
+    .section-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:16px;
+    }
+    .section-title{
+      font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+      color:var(--text-dim);display:flex;align-items:center;gap:10px;
+    }
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    /*  Card  */
+    .card{background:var(--surface);border:1px solid var(--border);padding:24px}
+
+    /*  Preferences form  */
+    .field{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+    .field:last-child{margin-bottom:0}
+    .field-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+    .field-hint{font-size:11px;color:var(--text-dim);margin-top:2px}
+
+    .email-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+    .email-row{display:flex;gap:8px;align-items:center}
+    .email-input{
+      flex:1;background:var(--surface-2);border:1px solid var(--border);
+      color:var(--text-bright);font-family:var(--mono);font-size:13px;
+      padding:9px 12px;outline:none;transition:border-color var(--t),box-shadow var(--t);
+    }
+    .email-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+    .email-input::placeholder{color:var(--text-dim)}
+
+    .del-btn{
+      padding:9px 12px;background:transparent;
+      border:1px solid rgba(255,61,61,.25);color:var(--red);
+      font-family:var(--mono);font-size:11px;cursor:pointer;
+      transition:all var(--t);white-space:nowrap;
+    }
+    .del-btn:hover{background:rgba(255,61,61,.08);border-color:var(--red)}
+
+    .add-btn{
+      padding:8px 16px;background:transparent;
+      border:1px dashed var(--border-h);color:var(--text-dim);
+      font-family:var(--mono);font-size:11px;cursor:pointer;
+      transition:all var(--t);letter-spacing:.5px;text-align:left;width:100%;
+    }
+    .add-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+    /* Toggles */
+    .toggle-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);
+      margin-bottom:6px;cursor:pointer;transition:border-color var(--t);
+    }
+    .toggle-row:hover{border-color:var(--border-h)}
+    .toggle-left{display:flex;flex-direction:column;gap:3px}
+    .toggle-name{font-size:12px;font-weight:600;color:var(--text-bright)}
+    .toggle-desc{font-size:11px;color:var(--text-dim)}
+    .toggle{
+      position:relative;width:38px;height:20px;
+      background:var(--border);border-radius:10px;
+      transition:background var(--t);cursor:pointer;flex-shrink:0;
+    }
+    .toggle.on{background:var(--accent)}
+    .toggle::after{
+      content:'';position:absolute;top:3px;left:3px;
+      width:14px;height:14px;background:#07080a;border-radius:50%;
+      transition:transform var(--t);
+    }
+    .toggle.on::after{transform:translateX(18px)}
+
+    /* Save button */
+    .save-btn{
+      padding:11px 24px;background:var(--accent);color:#07080a;
+      font-family:var(--mono);font-size:12px;font-weight:700;
+      letter-spacing:1.5px;text-transform:uppercase;border:none;cursor:pointer;
+      transition:all var(--t);display:inline-flex;align-items:center;gap:8px;
+    }
+    .save-btn:hover{background:#22dfff;box-shadow:0 0 20px var(--accent-glow)}
+    .save-btn:disabled{background:var(--border);color:var(--text-dim);cursor:not-allowed;box-shadow:none}
+
+    /* Alert */
+    .alert{padding:10px 14px;font-size:12px;border-left:3px solid;display:none;line-height:1.5;margin-top:16px}
+    .alert.v{display:block}
+    .alert-success{border-color:var(--green);background:rgba(34,197,94,.06);color:#4ade80}
+    .alert-error{border-color:var(--red);background:rgba(255,61,61,.06);color:#ff7070}
+
+    /* Report list */
+    .report-item{
+      display:flex;align-items:center;gap:14px;
+      background:var(--surface);border:1px solid var(--border);
+      padding:14px 16px;text-decoration:none;color:inherit;
+      transition:border-color var(--t),background var(--t);margin-bottom:6px;
+    }
+    .report-item:hover{border-color:var(--border-h);background:var(--surface-2)}
+    .report-item:hover .ri-title{color:var(--accent)}
+    .ri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .ri-dot.daily{background:var(--accent);box-shadow:0 0 5px var(--accent)}
+    .ri-dot.weekly{background:var(--accent2);box-shadow:0 0 5px var(--accent2)}
+    .ri-info{flex:1;min-width:0}
+    .ri-title{font-size:13px;font-weight:600;color:var(--text-bright);margin-bottom:3px;
+              white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color var(--t)}
+    .ri-meta{font-size:10px;color:var(--text-dim);display:flex;gap:12px;flex-wrap:wrap}
+    .ri-badge{font-size:9px;padding:3px 8px;letter-spacing:1px;flex-shrink:0}
+    .badge-daily{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.2)}
+    .badge-weekly{background:rgba(255,107,53,.08);color:#ff8c5a;border:1px solid rgba(255,107,53,.2)}
+    .skeleton{background:var(--surface);border:1px solid var(--border);padding:14px 16px;
+              height:56px;animation:shimmer 1.5s infinite;margin-bottom:6px}
+    @keyframes shimmer{0%,100%{opacity:.4}50%{opacity:.7}}
+    .empty{font-size:12px;color:var(--text-dim);padding:24px;text-align:center;
+           background:var(--surface);border:1px solid var(--border)}
+
+    /* RGPD section */
+    .rgpd-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:540px){.rgpd-grid{grid-template-columns:1fr}}
+    .rgpd-card{
+      padding:16px;background:var(--surface-2);border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .rgpd-label{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+    .rgpd-desc{font-size:11px;color:var(--text);line-height:1.5}
+    .rgpd-btn{
+      margin-top:8px;padding:7px 14px;background:transparent;
+      border:1px solid var(--border);color:var(--text-mid);font-family:var(--mono);
+      font-size:10px;letter-spacing:1px;cursor:pointer;transition:all var(--t);text-transform:uppercase;
+    }
+    .rgpd-btn:hover{border-color:var(--border-h);color:var(--text-bright)}
+    .rgpd-btn.danger{border-color:rgba(255,61,61,.3);color:var(--red)}
+    .rgpd-btn.danger:hover{background:rgba(255,61,61,.08);border-color:var(--red)}
+
+    /* Modal */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+      display:none;align-items:center;justify-content:center;padding:24px;
+    }
+    .modal-overlay.v{display:flex}
+    .modal{
+      background:var(--surface);border:1px solid var(--border);
+      width:100%;max-width:420px;padding:28px;position:relative;
+    }
+    .modal-title{font-family:var(--display);font-size:18px;font-weight:700;
+                 color:var(--text-bright);margin-bottom:10px}
+    .modal-text{font-size:12px;color:var(--text);line-height:1.6;margin-bottom:20px}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+    .modal-cancel{
+      padding:9px 18px;background:transparent;border:1px solid var(--border);
+      color:var(--text-mid);font-family:var(--mono);font-size:11px;cursor:pointer;
+      transition:all var(--t);
+    }
+    .modal-cancel:hover{border-color:var(--border-h);color:var(--text-bright)}
+    .modal-confirm{
+      padding:9px 18px;background:var(--red);color:#fff;
+      border:none;font-family:var(--mono);font-size:11px;font-weight:700;
+      letter-spacing:1px;cursor:pointer;transition:all var(--t);text-transform:uppercase;
+    }
+    .modal-confirm:hover{background:#ff5c5c}
+
+    .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.2);
+             border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+    .spinner.dark{border:2px solid rgba(0,0,0,.2);border-top-color:#07080a}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <a href="/" class="logo">Cyber<span>Brief</span></a>
+    <div class="nav-right">
+      <span class="nav-email" id="navEmail">—</span>
+      <a href="/" class="nav-btn reports-link">↗ Rapports</a>
+      <button class="nav-btn" id="logoutBtn">Déconnexion</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="page-title">Tableau de bord</div>
+    <div class="page-sub">Préférences · Rapports · Compte</div>
+
+    <!-- Mail Preferences -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Préférences d'envoi mail</div>
+      </div>
+      <div class="card" id="prefsCard">
+        <div class="field">
+          <div class="field-label">Adresses de réception</div>
+          <div class="field-hint">Maximum 5 adresses. Les rapports seront envoyés à chacune.</div>
+          <div class="email-list" id="emailList"></div>
+          <button class="add-btn" id="addEmailBtn" type="button">+ Ajouter une adresse</button>
+        </div>
+
+        <div class="field" style="margin-top:20px">
+          <div class="field-label">Fréquence d'envoi</div>
+          <label class="toggle-row" for="toggleDaily">
+            <div class="toggle-left">
+              <span class="toggle-name">Brief quotidien</span>
+              <span class="toggle-desc">Lundi – vendredi à 21h</span>
+            </div>
+            <div class="toggle on" id="toggleDaily" role="switch" aria-checked="true" tabindex="0"></div>
+          </label>
+          <label class="toggle-row" for="toggleWeekly">
+            <div class="toggle-left">
+              <span class="toggle-name">Récapitulatif hebdomadaire</span>
+              <span class="toggle-desc">Samedi matin — vue d'ensemble de la semaine</span>
+            </div>
+            <div class="toggle on" id="toggleWeekly" role="switch" aria-checked="true" tabindex="0"></div>
+          </label>
+        </div>
+
+        <div style="margin-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <button class="save-btn" id="savePrefsBtn">
+            <span class="spinner dark" id="saveSpinner"></span>
+            <span id="saveBtnText">Enregistrer</span>
+          </button>
+        </div>
+        <div class="alert alert-success" id="prefsSuccess"></div>
+        <div class="alert alert-error"   id="prefsError"></div>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Derniers rapports</div>
+      </div>
+      <div id="reportList">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    </section>
+
+    <!-- RGPD -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Données personnelles · RGPD</div>
+      </div>
+      <div class="rgpd-grid">
+        <div class="rgpd-card">
+          <div class="rgpd-label">Accès & Portabilité</div>
+          <div class="rgpd-desc">Téléchargez l'intégralité de vos données au format JSON (art. 15 & 20).</div>
+          <button class="rgpd-btn" id="exportBtn">↓ Exporter mes données</button>
+        </div>
+        <div class="rgpd-card">
+          <div class="rgpd-label">Supprimer mon compte</div>
+          <div class="rgpd-desc">Suppression définitive de vos données personnelles (art. 17). Irréversible.</div>
+          <button class="rgpd-btn danger" id="deleteAccountBtn">✕ Supprimer mon compte</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Security -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Sécurité</div>
+      </div>
+      <div class="card">
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;font-weight:600;color:var(--text-bright);margin-bottom:4px">Mot de passe</div>
+          <div style="font-size:11px;color:var(--text-dim)">Modifiez votre mot de passe de connexion.</div>
+        </div>
+        <div class="fields" style="display:flex;flex-direction:column;gap:12px">
+          <input type="password" id="currentPwd" placeholder="Mot de passe actuel" class="email-input" style="width:100%;max-width:340px">
+          <input type="password" id="newPwd"     placeholder="Nouveau mot de passe (8+ car., 1 maj., 1 chiffre)" class="email-input" style="width:100%;max-width:340px">
+          <input type="password" id="confirmPwd" placeholder="Confirmer le nouveau mot de passe" class="email-input" style="width:100%;max-width:340px">
+        </div>
+        <button class="save-btn" style="margin-top:16px" id="changePwdBtn">Changer le mot de passe</button>
+        <div class="alert alert-success" id="pwdSuccess"></div>
+        <div class="alert alert-error"   id="pwdError"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Delete Account Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-title">Supprimer le compte</div>
+      <div class="modal-text">
+        Cette action est <strong style="color:var(--red)">irréversible</strong>.
+        Toutes vos données personnelles (email, préférences) seront effacées.<br><br>
+        Les logs d'audit sont anonymisés conformément aux obligations NIS-2 (art. 21).
+      </div>
+      <div class="modal-actions">
+        <button class="modal-cancel" id="deleteCancelBtn">Annuler</button>
+        <button class="modal-confirm" id="deleteConfirmBtn">
+          <span class="spinner" id="deleteSpinner"></span>
+          <span id="deleteText">Supprimer</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Auth helpers 
+    function getToken() {
+      return sessionStorage.getItem('cb_access') || localStorage.getItem('cb_access');
+    }
+    function getRefresh() {
+      return localStorage.getItem('cb_refresh') || sessionStorage.getItem('cb_refresh');
+    }
+
+    async function authFetch(url, opts = {}) {
+      let token = getToken();
+      opts.headers = { ...opts.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      let res = await fetch(url, opts);
+      if (res.status === 401) {
+        // Try refresh
+        const refresh = getRefresh();
+        if (!refresh) { window.location.href = '/login'; return null; }
+        const r = await fetch('/api/auth/refresh', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+        if (!r.ok) { window.location.href = '/login'; return null; }
+        const d = await r.json();
+        sessionStorage.setItem('cb_access', d.access_token);
+        if (localStorage.getItem('cb_refresh')) localStorage.setItem('cb_refresh', d.refresh_token);
+        opts.headers['Authorization'] = `Bearer ${d.access_token}`;
+        res = await fetch(url, opts);
+      }
+      return res;
+    }
+
+    // Boot 
+    let userProfile = null;
+
+    async function boot() {
+      if (!getToken() && !getRefresh()) { window.location.href = '/login'; return; }
+      const res = await authFetch('/api/users/me');
+      if (!res || !res.ok) { window.location.href = '/login'; return; }
+      userProfile = await res.json();
+      document.getElementById('navEmail').textContent = userProfile.email;
+      loadPreferences(userProfile.preferences);
+      loadReports();
+    }
+
+    // Mail preferences 
+    let dailyOn = true;
+    let weeklyOn = true;
+
+    function loadPreferences(prefs) {
+      if (!prefs) return;
+      dailyOn  = prefs.send_daily;
+      weeklyOn = prefs.send_weekly;
+      updateToggle('toggleDaily',  dailyOn);
+      updateToggle('toggleWeekly', weeklyOn);
+
+      const list = document.getElementById('emailList');
+      list.innerHTML = '';
+      (prefs.recipient_emails || []).forEach(e => addEmailRow(e));
+      if (!prefs.recipient_emails?.length) addEmailRow('');
+    }
+
+    function updateToggle(id, on) {
+      const el = document.getElementById(id);
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-checked', on);
+    }
+
+    document.getElementById('toggleDaily').addEventListener('click', () => {
+      dailyOn = !dailyOn; updateToggle('toggleDaily', dailyOn);
+    });
+    document.getElementById('toggleWeekly').addEventListener('click', () => {
+      weeklyOn = !weeklyOn; updateToggle('toggleWeekly', weeklyOn);
+    });
+
+    function addEmailRow(val) {
+      const list = document.getElementById('emailList');
+      const row  = document.createElement('div');
+      row.className = 'email-row';
+      row.innerHTML = `
+        <input type="email" class="email-input" placeholder="destinataire@domain.com" value="${val || ''}">
+        <button type="button" class="del-btn">✕</button>
+      `;
+      row.querySelector('.del-btn').addEventListener('click', () => {
+        if (document.querySelectorAll('.email-row').length > 1) row.remove();
+      });
+      list.appendChild(row);
+    }
+
+    document.getElementById('addEmailBtn').addEventListener('click', () => {
+      if (document.querySelectorAll('.email-row').length >= 5) {
+        showAlert('prefsError', 'Maximum 5 adresses.');
+        return;
+      }
+      addEmailRow('');
+    });
+
+    function showAlert(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.classList.add('v');
+      setTimeout(() => el.classList.remove('v'), 5000);
+    }
+
+    document.getElementById('savePrefsBtn').addEventListener('click', async () => {
+      const emails = [...document.querySelectorAll('.email-input')]
+        .map(e => e.value.trim()).filter(Boolean);
+      if (!emails.length) { showAlert('prefsError', 'Au moins une adresse email requise.'); return; }
+
+      const btn = document.getElementById('savePrefsBtn');
+      const sp  = document.getElementById('saveSpinner');
+      const tx  = document.getElementById('saveBtnText');
+      btn.disabled = true; sp.style.display = 'inline-block'; tx.textContent = 'Enregistrement…';
+
+      const res = await authFetch('/api/users/me/preferences', {
+        method: 'PUT',
+        body: JSON.stringify({ recipient_emails: emails, send_daily: dailyOn, send_weekly: weeklyOn }),
+      });
+
+      btn.disabled = false; sp.style.display = 'none'; tx.textContent = 'Enregistrer';
+      if (res && res.ok) {
+        showAlert('prefsSuccess', '✓ Préférences enregistrées.');
+      } else {
+        showAlert('prefsError', 'Erreur lors de la sauvegarde.');
+      }
+    });
+
+    // Reports 
+    async function loadReports() {
+      const list = document.getElementById('reportList');
+      try {
+        const res = await fetch('/reports/manifest.json');
+        if (!res.ok) throw new Error();
+        const reports = await res.json();
+        if (!reports.length) {
+          list.innerHTML = '<div class="empty">Aucun rapport disponible pour le moment.</div>';
+          return;
+        }
+        list.innerHTML = reports.slice(0, 10).map(r => {
+          const dotClass   = r.type === 'weekly' ? 'weekly' : 'daily';
+          const badgeClass = r.type === 'weekly' ? 'badge-weekly' : 'badge-daily';
+          const badgeLabel = r.type === 'weekly' ? 'HEBDO' : 'QUOTIDIEN';
+          const frBadge    = r.breaches_fr > 0
+            ? `<span style="color:#fca5a5">🇫🇷 ${r.breaches_fr} FR</span>` : '';
+          return `
+            <a class="report-item" href="/reports/${r.filename}" target="_blank">
+              <div class="ri-dot ${dotClass}"></div>
+              <div class="ri-info">
+                <div class="ri-title">${r.title}</div>
+                <div class="ri-meta">
+                  <span>${r.date}</span>
+                  <span>${r.articles} articles</span>
+                  <span style="color:var(--yellow)">🩹 ${r.cves} CVEs</span>
+                  ${frBadge}
+                </div>
+              </div>
+              <span class="ri-badge ${badgeClass}">${badgeLabel}</span>
+            </a>`;
+        }).join('');
+      } catch {
+        list.innerHTML = '<div class="empty">Impossible de charger les rapports.</div>';
+      }
+    }
+
+    // RGPD 
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      const res = await authFetch('/api/users/me/export');
+      if (!res || !res.ok) { alert('Erreur lors de l\'export.'); return; }
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `cyberbrief-data-export-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    });
+
+    // Delete account
+    document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+      document.getElementById('deleteModal').classList.add('v');
+    });
+    document.getElementById('deleteCancelBtn').addEventListener('click', () => {
+      document.getElementById('deleteModal').classList.remove('v');
+    });
+    document.getElementById('deleteConfirmBtn').addEventListener('click', async () => {
+      const sp = document.getElementById('deleteSpinner');
+      const tx = document.getElementById('deleteText');
+      sp.style.display = 'inline-block'; tx.textContent = 'Suppression…';
+
+      const res = await authFetch('/api/users/me', { method: 'DELETE' });
+      if (res && res.ok) {
+        sessionStorage.clear(); localStorage.clear();
+        window.location.href = '/login?deleted=1';
+      } else {
+        sp.style.display = 'none'; tx.textContent = 'Supprimer';
+        document.getElementById('deleteModal').classList.remove('v');
+        alert('Erreur lors de la suppression.');
+      }
+    });
+
+    // Change password 
+    document.getElementById('changePwdBtn').addEventListener('click', async () => {
+      const cur  = document.getElementById('currentPwd').value;
+      const nw   = document.getElementById('newPwd').value;
+      const conf = document.getElementById('confirmPwd').value;
+
+      document.getElementById('pwdSuccess').classList.remove('v');
+      document.getElementById('pwdError').classList.remove('v');
+
+      if (!cur || !nw || !conf) { showAlert('pwdError', 'Veuillez remplir tous les champs.'); return; }
+      if (nw !== conf)           { showAlert('pwdError', 'Les mots de passe ne correspondent pas.'); return; }
+      if (nw.length < 8)         { showAlert('pwdError', 'Minimum 8 caractères.'); return; }
+
+      const res = await authFetch('/api/users/me/change-password', {
+        method: 'POST',
+        body:   JSON.stringify({ current_password: cur, new_password: nw }),
+      });
+
+      if (res && res.ok) {
+        showAlert('pwdSuccess', '✓ Mot de passe modifié. Reconnectez-vous.');
+        ['currentPwd','newPwd','confirmPwd'].forEach(id => document.getElementById(id).value = '');
+        setTimeout(() => { sessionStorage.clear(); localStorage.clear(); window.location.href = '/login'; }, 2500);
+      } else {
+        const d = res ? await res.json() : {};
+        showAlert('pwdError', d.detail || 'Erreur.');
+      }
+    });
+
+    // Logout 
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const refresh = getRefresh();
+      if (refresh) {
+        await fetch('/api/auth/logout', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ refresh_token: refresh }),
+        });
+      }
+      sessionStorage.clear(); localStorage.clear();
+      window.location.href = '/login';
+    });
+
+    boot();
+  </script>
+</body>
+</html>

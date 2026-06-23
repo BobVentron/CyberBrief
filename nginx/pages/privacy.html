@@ -1,0 +1,179 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberBrief — Politique de confidentialité</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#07080a;--surface:#0c0e12;--border:#1c2028;
+      --accent:#00d4ff;--accent-dim:rgba(0,212,255,.08);
+      --text:#8892a0;--text-mid:#b8c4d0;--text-bright:#eef2f7;--text-dim:#3d4a5c;
+      --mono:'JetBrains Mono',monospace;--display:'Syne',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased}
+    body{background:var(--bg);color:var(--text-mid);font-family:var(--mono);font-size:13px;line-height:1.7;min-height:100vh}
+
+    header{
+      border-bottom:1px solid var(--border);padding:20px 0;
+      background:var(--surface);
+    }
+    .container{max-width:760px;margin:0 auto;padding:0 24px}
+
+    .logo{font-family:var(--display);font-size:20px;font-weight:800;
+          color:var(--text-bright);letter-spacing:-.5px;text-decoration:none}
+    .logo span{color:var(--accent)}
+
+    main{padding:52px 0 80px}
+
+    h1{font-family:var(--display);font-size:26px;font-weight:800;color:var(--text-bright);
+       letter-spacing:-.5px;margin-bottom:6px}
+    .meta{font-size:10px;color:var(--text-dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:44px}
+
+    h2{
+      font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+      color:var(--text-dim);margin:36px 0 14px;display:flex;align-items:center;gap:10px;
+    }
+    h2::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    p{margin-bottom:12px;font-size:12px}
+    ul{margin:8px 0 14px 0;padding-left:20px;font-size:12px}
+    li{margin-bottom:5px;color:var(--text-mid)}
+
+    .highlight{
+      background:var(--accent-dim);border-left:3px solid var(--accent);
+      padding:12px 16px;margin:16px 0;font-size:12px;color:var(--text-mid);
+    }
+
+    .rights-grid{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0;
+    }
+    @media(max-width:520px){.rights-grid{grid-template-columns:1fr}}
+    .right-card{
+      background:var(--surface);border:1px solid var(--border);
+      padding:14px 16px;
+    }
+    .right-label{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+                 color:var(--accent);margin-bottom:5px}
+    .right-desc{font-size:11px;color:var(--text);line-height:1.5}
+
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .back{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dim);
+          text-decoration:none;margin-bottom:28px;transition:color .18s}
+    .back:hover{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">Cyber<span>Brief</span></a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <a href="/register" class="back">← Retour</a>
+
+      <h1>Politique de confidentialité</h1>
+      <div class="meta">Dernière mise à jour · Mai 2026 · RGPD · Règlement (UE) 2016/679</div>
+
+      <div class="highlight">
+        CyberBrief est une application <strong>self-hosted</strong>. Cette politique s'applique
+        à votre instance locale. Aucune donnée n'est transmise à l'éditeur du logiciel.
+      </div>
+
+      <h2>1. Responsable du traitement</h2>
+      <p>L'administrateur de cette instance CyberBrief est responsable du traitement des données personnelles.
+         Les coordonnées du responsable sont disponibles sur demande via l'interface d'administration.</p>
+
+      <h2>2. Données collectées</h2>
+      <p>CyberBrief collecte uniquement les données strictement nécessaires à son fonctionnement :</p>
+      <ul>
+        <li><strong>Adresse email</strong> — identification du compte et envoi des rapports</li>
+        <li><strong>Mot de passe hashé</strong> — stocké en bcrypt (coût 12), jamais en clair</li>
+        <li><strong>Préférences d'envoi</strong> — adresses de réception, fréquence (quotidien/hebdo)</li>
+        <li><strong>Date et heure de consentement</strong> — conformité RGPD art. 7</li>
+        <li><strong>Logs d'audit</strong> — actions sensibles (connexion, modification de compte…), adresse IP, user-agent</li>
+        <li><strong>Horodatages</strong> — création du compte, dernière connexion</li>
+      </ul>
+      <p>CyberBrief ne collecte pas : nom, prénom, données de localisation, cookies de tracking, données de navigation.</p>
+
+      <h2>3. Finalités et bases légales</h2>
+      <ul>
+        <li><strong>Authentification</strong> — exécution du contrat (art. 6.1.b RGPD)</li>
+        <li><strong>Envoi des rapports</strong> — exécution du contrat (art. 6.1.b)</li>
+        <li><strong>Logs d'audit</strong> — obligation légale / intérêt légitime sécurité (art. 6.1.c &amp; f), NIS-2 art. 21</li>
+        <li><strong>Consentement RGPD</strong> — consentement explicite (art. 6.1.a)</li>
+      </ul>
+
+      <h2>4. Durée de conservation</h2>
+      <ul>
+        <li><strong>Données du compte</strong> — conservées tant que le compte est actif, supprimées sur demande (art. 17)</li>
+        <li><strong>Logs d'audit</strong> — 12 mois minimum (NIS-2), anonymisés à la suppression du compte</li>
+        <li><strong>Tokens de session</strong> — 30 jours, révocables à tout moment</li>
+        <li><strong>Tokens email/reset</strong> — 24 heures, usage unique</li>
+      </ul>
+
+      <h2>5. Sécurité des données</h2>
+      <p>Mesures techniques et organisationnelles en place :</p>
+      <ul>
+        <li>Mots de passe hashés bcrypt (facteur de coût 12)</li>
+        <li>Tokens sensibles stockés en SHA-256, jamais en clair en base de données</li>
+        <li>JWT à courte durée de vie (15 min) avec rotation des refresh tokens</li>
+        <li>Transport HTTPS obligatoire en production</li>
+        <li>Rate limiting sur les endpoints d'authentification</li>
+        <li>Headers de sécurité HTTP (CSP, X-Frame-Options, etc.)</li>
+        <li>Isolation des conteneurs Docker, réseau interne non exposé</li>
+      </ul>
+
+      <h2>6. Vos droits (RGPD)</h2>
+      <div class="rights-grid">
+        <div class="right-card">
+          <div class="right-label">Accès · Art. 15</div>
+          <div class="right-desc">Consulter toutes vos données via votre tableau de bord.</div>
+        </div>
+        <div class="right-card">
+          <div class="right-label">Rectification · Art. 16</div>
+          <div class="right-desc">Modifier vos préférences à tout moment depuis le dashboard.</div>
+        </div>
+        <div class="right-card">
+          <div class="right-label">Effacement · Art. 17</div>
+          <div class="right-desc">Supprimer votre compte et toutes vos données via le dashboard.</div>
+        </div>
+        <div class="right-card">
+          <div class="right-label">Portabilité · Art. 20</div>
+          <div class="right-desc">Exporter vos données au format JSON depuis le dashboard.</div>
+        </div>
+        <div class="right-card">
+          <div class="right-label">Opposition · Art. 21</div>
+          <div class="right-desc">Désactiver les envois mail ou supprimer votre compte.</div>
+        </div>
+        <div class="right-card">
+          <div class="right-label">Réclamation</div>
+          <div class="right-desc">Contacter la CNIL : <a href="https://www.cnil.fr" target="_blank">cnil.fr</a></div>
+        </div>
+      </div>
+      <p>Pour exercer vos droits, utilisez directement votre tableau de bord ou contactez l'administrateur de l'instance.</p>
+
+      <h2>7. Partage des données</h2>
+      <p>
+        Les données ne sont pas partagées avec des tiers. Le seul transfert de données consiste
+        en l'envoi des rapports aux adresses email que vous avez configurées — ce transfert est
+        effectué uniquement par votre propre serveur SMTP.
+      </p>
+
+      <h2>8. Cookies</h2>
+      <p>
+        CyberBrief n'utilise pas de cookies de tracking. Les tokens d'authentification sont
+        stockés dans <code>sessionStorage</code> ou <code>localStorage</code> selon votre choix
+        à la connexion, et restent dans votre navigateur uniquement.
+      </p>
+    </div>
+  </main>
+</body>
+</html>
