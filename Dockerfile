@@ -5,7 +5,7 @@ WORKDIR /app
 # Dépendances Python (vendorisées — aucun réseau requis au build)
 COPY requirements.txt .
 COPY vendor/ ./vendor/
-RUN pip install --no-cache-dir --no-index --find-links vendor/ -r requirements.txt
+RUN pip install --no-cache-dir --no-index --no-build-isolation --find-links vendor/ -r requirements.txt
 
 # Code source
 COPY . .
