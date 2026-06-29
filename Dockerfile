@@ -2,10 +2,9 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /app
 
-# Dépendances Python (wheels vendorisées — pas de réseau requis)
+# Dépendances Python
 COPY requirements.txt .
-COPY vendor/ ./vendor/
-RUN pip install --no-cache-dir --no-index --find-links vendor/ -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Code source
 COPY . .
