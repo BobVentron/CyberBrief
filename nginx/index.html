@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CyberBrief — Rapports</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2305060a'/%3E%3Ctext x='4' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23e4eaf2'%3EC%3C/text%3E%3Ctext x='15' y='23' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%2300d4ff'%3EB%3C/text%3E%3C/svg%3E">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#05060a">
+  <link rel="apple-touch-icon" href="/pages/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CyberBrief">
+
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -113,6 +123,21 @@
       <!-- Rempli par JS selon état connexion -->
     </div>
   </nav>
+
+  <button id="installBtn" hidden
+    style="width:100%;margin:0 0 18px;padding:14px;border:1px solid #00d4ff;border-radius:10px;
+           background:rgba(0,212,255,.08);color:#22dfff;font:600 14px/1 'JetBrains Mono',monospace;
+           letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+    <span style="font-size:18px;">📲</span> Installer l'application CyberBrief
+  </button>
+
+  <div id="iosHint" hidden
+    style="margin:0 0 18px;padding:14px 16px;border:1px solid #2a3f57;border-radius:10px;
+           background:rgba(255,255,255,.02);color:#9fb2c8;font:400 13px/1.5 'JetBrains Mono',monospace;">
+    📲 <strong style="color:#e4eaf2;">Installer sur iPhone/iPad</strong><br>
+    Appuie sur <strong style="color:#22dfff;">Partager</strong> (carré avec flèche) puis
+    <strong style="color:#22dfff;">« Sur l'écran d'accueil »</strong>.
+  </div>
 
   <div class="status-bar">
     <div class="sb-item">
@@ -225,6 +250,49 @@
       <a href="/login"    class="btn-nav btn-login">Se connecter</a>
       <a href="/register" class="btn-nav btn-register">Créer un compte</a>`;
   }
+
+  // ── PWA : installation comme une vraie app ───────────────────────
+  (function initPWA() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    const installBtn = document.getElementById('installBtn');
+    const iosHint    = document.getElementById('iosHint');
+    let deferredPrompt = null;
+
+    // Deja installee (lancee depuis l'ecran d'accueil) → on n'affiche rien
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+    if (standalone) return;
+
+    // Chrome / Edge / Android : capture l'evenement et affiche le bouton
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.hidden = false;
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      installBtn.hidden = true;
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBtn.hidden = true;
+      deferredPrompt = null;
+    });
+
+    // iOS Safari : pas d'evenement d'install → on montre les instructions
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+    if (isIOS && isSafari) iosHint.hidden = false;
+  })();
 </script>
 </body>
 </html>

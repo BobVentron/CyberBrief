@@ -1,0 +1,32 @@
+{
+  "name": "CyberBrief — Veille cyber",
+  "short_name": "CyberBrief",
+  "description": "Veille cybersécurité personnalisée. Rapports quotidiens et récap hebdomadaire.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05060a",
+  "theme_color": "#05060a",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/pages/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pages/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pages/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
