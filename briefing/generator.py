@@ -4,7 +4,7 @@ Deux prompts distincts : quotidien (lun-ven) et hebdomadaire (samedi)
 """
 
 import os
-import anthropic
+import requests
 from datetime import datetime
 
 
@@ -179,28 +179,37 @@ def generate_briefing(data: dict, model: str = None) -> tuple[str, dict, str]:
     Retourne (html, usage, model_used)
     usage = {"input_tokens": int, "output_tokens": int}
     """
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-
-    model          = model or os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
-    mode           = data.get("mode", "daily")
-    system_prompt  = SYSTEM_WEEKLY if mode == "weekly" else SYSTEM_DAILY
-    max_tokens     = 8192 if mode == "weekly" else 4096
-    label          = "récap hebdo" if mode == "weekly" else "briefing quotidien"
+    model         = model or os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
+    mode          = data.get("mode", "daily")
+    system_prompt = SYSTEM_WEEKLY if mode == "weekly" else SYSTEM_DAILY
+    max_tokens    = 8192 if mode == "weekly" else 4096
+    label         = "récap hebdo" if mode == "weekly" else "briefing quotidien"
 
     user_prompt = build_user_prompt(data)
     print(f"[CLAUDE] Génération {label} ({model}) — {len(user_prompt)} chars d'input…")
 
-    message = client.messages.create(
-        model=model,
-        max_tokens=max_tokens,
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_prompt}],
+    resp = requests.post(
+        "https://api.anthropic.com/v1/messages",
+        headers={
+            "x-api-key":         os.environ["ANTHROPIC_API_KEY"],
+            "anthropic-version": "2023-06-01",
+            "content-type":      "application/json",
+        },
+        json={
+            "model":      model,
+            "max_tokens": max_tokens,
+            "system":     system_prompt,
+            "messages":   [{"role": "user", "content": user_prompt}],
+        },
+        timeout=120,
     )
+    resp.raise_for_status()
+    body = resp.json()
 
-    html  = message.content[0].text
+    html  = body["content"][0]["text"]
     usage = {
-        "input_tokens":  message.usage.input_tokens,
-        "output_tokens": message.usage.output_tokens,
+        "input_tokens":  body["usage"]["input_tokens"],
+        "output_tokens": body["usage"]["output_tokens"],
     }
     print(f"[CLAUDE] {label} généré — {len(html)} chars "
           f"| {usage['input_tokens']:,} in + {usage['output_tokens']:,} out tokens")
