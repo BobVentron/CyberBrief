@@ -16,13 +16,7 @@ RUN npx prisma generate
 # Code source
 COPY src ./src/
 
-# Répertoires de données
 RUN mkdir -p /app/reports /app/logs
-
-# Non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
-    && chown -R appuser:appgroup /app
-USER appuser
 
 EXPOSE 8000
 
