@@ -27,7 +27,7 @@ def clean_html(raw: str) -> str:
     """Supprime le HTML et tronque à 600 chars."""
     if not raw:
         return ""
-    return BeautifulSoup(raw, "lxml").get_text(separator=" ", strip=True)[:600]
+    return BeautifulSoup(raw, "html.parser").get_text(separator=" ", strip=True)[:600]
 
 
 def is_france_related(title: str, summary: str, source_tags: list) -> bool:
