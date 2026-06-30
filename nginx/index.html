@@ -263,10 +263,14 @@
     const iosHint    = document.getElementById('iosHint');
     let deferredPrompt = null;
 
-    // Deja installee (lancee depuis l'ecran d'accueil) → on n'affiche rien
+    // Deja installee (mode standalone OU flag persistant) → on n'affiche rien
     const standalone = window.matchMedia('(display-mode: standalone)').matches
       || window.navigator.standalone === true;
-    if (standalone) return;
+    if (standalone || localStorage.getItem('cb_installed')) {
+      installBtn.hidden = true;
+      iosHint.hidden = true;
+      return;
+    }
 
     // Chrome / Edge / Android : capture l'evenement et affiche le bouton
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -278,13 +282,16 @@
     installBtn.addEventListener('click', async () => {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') localStorage.setItem('cb_installed', '1');
       deferredPrompt = null;
       installBtn.hidden = true;
     });
 
     window.addEventListener('appinstalled', () => {
+      localStorage.setItem('cb_installed', '1');
       installBtn.hidden = true;
+      iosHint.hidden = true;
       deferredPrompt = null;
     });
 
