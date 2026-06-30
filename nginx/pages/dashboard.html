@@ -263,8 +263,27 @@
 
         <div class="field" style="margin-top:20px">
           <div class="field-label">Notifications push</div>
-          <div class="field-hint">Recevez une alerte instantanée dès qu'un nouveau brief est publié. Fonctionne même l'app fermée (installez l'app pour iPhone).</div>
-          <label class="toggle-row" for="togglePush">
+          <div class="field-hint">Recevez une alerte instantanée dès qu'un nouveau brief est publié.</div>
+
+          <!-- App NON installée → conseil d'installation -->
+          <div id="pushInstallReco" hidden
+            style="margin-top:6px;padding:14px 16px;border:1px solid #2a3f57;border-radius:10px;background:rgba(0,212,255,.05);">
+            <div style="font-size:12px;font-weight:600;color:var(--text-bright);margin-bottom:4px">📲 Installez l'application</div>
+            <div style="font-size:11px;color:var(--text-dim);line-height:1.5">
+              Pour recevoir les notifications push (même l'app fermée), ajoutez CyberBrief à votre écran d'accueil.
+            </div>
+            <button type="button" id="dashInstallBtn" hidden
+              style="margin-top:10px;padding:9px 14px;border:1px solid var(--accent);border-radius:8px;background:rgba(0,212,255,.1);color:#22dfff;font:600 12px/1 var(--mono);cursor:pointer">
+              Installer l'application
+            </button>
+            <div id="dashIosHint" hidden style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5">
+              Sur iPhone/iPad : appuie sur <strong style="color:#22dfff">Partager</strong> puis
+              <strong style="color:#22dfff">« Sur l'écran d'accueil »</strong>.
+            </div>
+          </div>
+
+          <!-- App installée → gestion des notifications -->
+          <label class="toggle-row" for="togglePush" id="pushManageRow" hidden>
             <div class="toggle-left">
               <span class="toggle-name">Notifications sur cet appareil</span>
               <span class="toggle-desc" id="pushDesc">Activez pour être prévenu des nouveaux briefs</span>
@@ -430,14 +449,48 @@
       weeklyOn = !weeklyOn; updateToggle('toggleWeekly', weeklyOn);
     });
 
-    // ── Notifications push (cet appareil, lie au compte) ───────────
+    // ── Notifications push (selon que l'app est installee ou non) ──
     (function initPushToggle() {
-      const toggle = document.getElementById('togglePush');
-      const desc   = document.getElementById('pushDesc');
+      const toggle     = document.getElementById('togglePush');
+      const desc       = document.getElementById('pushDesc');
+      const manageRow  = document.getElementById('pushManageRow');
+      const reco       = document.getElementById('pushInstallReco');
+      const installBtn = document.getElementById('dashInstallBtn');
+      const iosHint    = document.getElementById('dashIosHint');
       if (!toggle) return;
+
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+      const hasApp = standalone || localStorage.getItem('cb_installed');
+
+      // Pas d'app installee → on conseille l'installation
+      if (!hasApp) {
+        reco.hidden = false;
+        let deferred = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault(); deferred = e; installBtn.hidden = false;
+        });
+        installBtn.addEventListener('click', async () => {
+          if (!deferred) return;
+          deferred.prompt();
+          const { outcome } = await deferred.userChoice;
+          if (outcome === 'accepted') { localStorage.setItem('cb_installed', '1'); location.reload(); }
+          deferred = null;
+        });
+        window.addEventListener('appinstalled', () => {
+          localStorage.setItem('cb_installed', '1'); location.reload();
+        });
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+        if (isIOS && isSafari) iosHint.hidden = false;
+        return;
+      }
+
+      // App installee → gestion des notifications
+      manageRow.hidden = false;
       const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
       if (!supported) {
-        desc.textContent = "Non supporte ici (installez l'app sur iPhone)";
+        desc.textContent = "Non supporte sur cet appareil";
         toggle.style.opacity = '.4'; toggle.style.pointerEvents = 'none';
         return;
       }
