@@ -131,6 +131,13 @@
     <span style="font-size:18px;">📲</span> Installer l'application CyberBrief
   </button>
 
+  <button id="notifBtn" hidden
+    style="width:100%;margin:0 0 18px;padding:14px;border:1px solid #2a3f57;border-radius:10px;
+           background:rgba(255,255,255,.02);color:#e4eaf2;font:600 14px/1 'JetBrains Mono',monospace;
+           letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;">
+    <span style="font-size:18px;">🔔</span> <span id="notifBtnLabel">Activer les notifications</span>
+  </button>
+
   <div id="iosHint" hidden
     style="margin:0 0 18px;padding:14px 16px;border:1px solid #2a3f57;border-radius:10px;
            background:rgba(255,255,255,.02);color:#9fb2c8;font:400 13px/1.5 'JetBrains Mono',monospace;">
@@ -290,6 +297,7 @@
 
     window.addEventListener('appinstalled', () => {
       localStorage.setItem('cb_installed', '1');
+      fetch('/api/push/track-install', { method: 'POST' }).catch(() => {});
       installBtn.hidden = true;
       iosHint.hidden = true;
       deferredPrompt = null;
@@ -299,6 +307,74 @@
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
     if (isIOS && isSafari) iosHint.hidden = false;
+  })();
+
+  // ── Notifications push (abonnement / desabonnement) ──────────────
+  (function initPush() {
+    const btn   = document.getElementById('notifBtn');
+    const label = document.getElementById('notifBtnLabel');
+    if (!btn) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      return; // non supporte (ex : iOS hors app installee)
+    }
+
+    const b64ToUint8 = (s) => {
+      const pad = '='.repeat((4 - s.length % 4) % 4);
+      const base64 = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(base64);
+      return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+    };
+
+    async function refresh() {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      btn.hidden = false;
+      if (Notification.permission === 'denied') {
+        label.textContent = 'Notifications bloquees (reglages du navigateur)';
+        btn.dataset.state = 'denied';
+        return;
+      }
+      if (sub) { label.textContent = 'Notifications activees — desactiver'; btn.dataset.state = 'on'; }
+      else     { label.textContent = 'Activer les notifications';          btn.dataset.state = 'off'; }
+    }
+
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.state === 'denied') return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (btn.dataset.state === 'on') {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await fetch('/api/push/unsubscribe', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: sub.endpoint }),
+            }).catch(() => {});
+            await sub.unsubscribe();
+          }
+          return refresh();
+        }
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return refresh();
+        const { publicKey, enabled } = await (await fetch('/api/push/key')).json();
+        if (!enabled || !publicKey) { label.textContent = 'Notifications indisponibles'; return; }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: b64ToUint8(publicKey),
+        });
+        const access = sessionStorage.getItem('cb_access') || localStorage.getItem('cb_access');
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' },
+            access ? { Authorization: 'Bearer ' + access } : {}),
+          body: JSON.stringify(sub),
+        });
+        refresh();
+      } catch (_) {
+        label.textContent = "Erreur d'activation";
+      }
+    });
+
+    navigator.serviceWorker.ready.then(refresh).catch(() => {});
   })();
 </script>
 </body>

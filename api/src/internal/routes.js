@@ -2,6 +2,7 @@
 // Authentification : X-Internal-Token
 import { Router } from 'express';
 import prisma from '../db/prisma.js';
+import { sendPushToAll } from '../push/routes.js';
 
 const router = Router();
 const INTERNAL_TOKEN = process.env.INTERNAL_API_TOKEN || '';
@@ -76,6 +77,16 @@ router.post('/api-usage', async (req, res) => {
   });
 
   res.json({ cost_usd: parseFloat(costUsd.toFixed(6)), total_tokens: input_tokens + output_tokens });
+
+  // Notification push à tous les abonnés (asynchrone, ne bloque pas la réponse)
+  const weekly = report_type === 'weekly';
+  sendPushToAll({
+    title: weekly ? 'Récap hebdo CyberBrief' : 'Nouveau brief CyberBrief',
+    body:  weekly
+      ? 'Votre récapitulatif cybersécurité de la semaine est disponible.'
+      : 'Votre briefing cybersécurité du jour est disponible.',
+    url:   '/reports/' + report_file,
+  }).catch((e) => console.error('[PUSH] Erreur envoi:', e.message));
 });
 
 export default router;

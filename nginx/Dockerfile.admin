@@ -1,0 +1,9 @@
+# Image du panneau admin CyberBrief — fichiers copiés dans l'image
+# Le token ADMIN_API_TOKEN est injecté au démarrage via envsubst (entrypoint nginx)
+FROM nginx:alpine
+
+COPY pages/admin.html             /usr/share/nginx/html/admin.html
+COPY js/                          /usr/share/nginx/html/js/
+COPY templates/admin.conf.template /etc/nginx/templates/default.conf.template
+
+EXPOSE 80

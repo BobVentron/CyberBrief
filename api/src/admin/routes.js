@@ -473,4 +473,30 @@ router.delete('/recipients/:email', async (req, res) => {
   res.json({ ok: true, recipients: next });
 });
 
+// GET /api/admin/push-stats — stats notifications push + PWA
+router.get('/push-stats', async (_req, res) => {
+  const [total, linked, installsSetting, recent] = await Promise.all([
+    prisma.pushSubscription.count(),
+    prisma.pushSubscription.count({ where: { userId: { not: null } } }),
+    prisma.setting.findUnique({ where: { key: 'pwa_installs' } }),
+    prisma.pushSubscription.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 15,
+      select: { userAgent: true, userId: true, createdAt: true },
+    }),
+  ]);
+
+  res.json({
+    total_subscriptions: total,
+    linked_to_account:   linked,
+    anonymous:           total - linked,
+    pwa_installs:        parseInt(installsSetting?.value || '0', 10) || 0,
+    recent: recent.map(r => ({
+      user_agent: r.userAgent,
+      linked:     Boolean(r.userId),
+      created_at: r.createdAt,
+    })),
+  });
+});
+
 export default router;

@@ -58,6 +58,9 @@ services:
       - REPORTS_DIR=/app/reports
       - ACCESS_TTL_MIN=${ACCESS_TTL_MIN:-15}
       - REFRESH_TTL_DAYS=${REFRESH_TTL_DAYS:-30}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-mailto:bastien@soleilhac.me}
       - NODE_ENV=production
       - TZ=${TZ:-Europe/Paris}
     volumes:
@@ -94,17 +97,15 @@ services:
       - cyberbrief-internal
 
   cyberbrief-web:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.web
     container_name: cyberbrief-web
     restart: unless-stopped
     depends_on:
       - cyberbrief-api
     volumes:
       - ./reports:/usr/share/nginx/html/reports:ro
-      - ./nginx/index.html:/usr/share/nginx/html/index.html:ro
-      - ./nginx/pages:/usr/share/nginx/html/pages:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./logs/nginx:/var/log/nginx
     networks:
       - cyberbrief-internal
@@ -112,7 +113,9 @@ services:
       - "dockhand.enable=true"
 
   cyberbrief-admin:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.admin
     container_name: cyberbrief-admin
     restart: unless-stopped
     depends_on:
@@ -120,9 +123,6 @@ services:
     environment:
       - ADMIN_API_TOKEN=${ADMIN_API_TOKEN}
     volumes:
-      - ./nginx/pages/admin.html:/usr/share/nginx/html/admin.html:ro
-      - ./nginx/js:/usr/share/nginx/html/js:ro
-      - ./nginx/templates/admin.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./logs/admin:/var/log/nginx
     networks:
       - cyberbrief-internal

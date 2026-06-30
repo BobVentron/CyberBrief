@@ -10,6 +10,7 @@ import usersRouter    from './users/routes.js';
 import adminRouter    from './admin/routes.js';
 import mailerRouter   from './mailer/routes.js';
 import internalRouter from './internal/routes.js';
+import pushRouter     from './push/routes.js';
 
 const app  = express();
 const PORT = process.env.PORT || 8000;
@@ -50,6 +51,7 @@ app.use('/api/users',    usersRouter);
 app.use('/api/admin',    adminRouter);
 app.use('/api/mailer',   mailerRouter);
 app.use('/api/internal', internalRouter);
+app.use('/api/push',     pushRouter);
 
 // Healthcheck
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'cyberbrief-api' }));

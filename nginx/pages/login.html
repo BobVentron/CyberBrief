@@ -237,8 +237,8 @@
 
           <div class="row-between">
             <label class="checkbox-label">
-              <input type="checkbox" id="remember">
-              <span>Se souvenir de moi</span>
+              <input type="checkbox" id="remember" checked>
+              <span>Rester connecté</span>
             </label>
             <a href="/forgot-password" class="link">Mot de passe oublié ?</a>
           </div>
@@ -342,9 +342,12 @@
           return;
         }
 
-        // Stockage tokens
+        // Stockage tokens — persistance en localStorage si "rester connecté"
+        // ou si l'app est installee (PWA standalone) pour eviter les reconnexions.
+        const standalone = window.matchMedia('(display-mode: standalone)').matches
+          || window.navigator.standalone === true;
         sessionStorage.setItem('cb_access', data.access_token);
-        if (remember) {
+        if (remember || standalone) {
           localStorage.setItem('cb_refresh', data.refresh_token);
         } else {
           sessionStorage.setItem('cb_refresh', data.refresh_token);

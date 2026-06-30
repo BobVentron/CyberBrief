@@ -261,6 +261,18 @@
           </label>
         </div>
 
+        <div class="field" style="margin-top:20px">
+          <div class="field-label">Notifications push</div>
+          <div class="field-hint">Recevez une alerte instantanée dès qu'un nouveau brief est publié. Fonctionne même l'app fermée (installez l'app pour iPhone).</div>
+          <label class="toggle-row" for="togglePush">
+            <div class="toggle-left">
+              <span class="toggle-name">Notifications sur cet appareil</span>
+              <span class="toggle-desc" id="pushDesc">Activez pour être prévenu des nouveaux briefs</span>
+            </div>
+            <div class="toggle" id="togglePush" role="switch" aria-checked="false" tabindex="0"></div>
+          </label>
+        </div>
+
         <div style="margin-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <button class="save-btn" id="savePrefsBtn">
             <span class="spinner dark" id="saveSpinner"></span>
@@ -417,6 +429,68 @@
     document.getElementById('toggleWeekly').addEventListener('click', () => {
       weeklyOn = !weeklyOn; updateToggle('toggleWeekly', weeklyOn);
     });
+
+    // ── Notifications push (cet appareil, lie au compte) ───────────
+    (function initPushToggle() {
+      const toggle = document.getElementById('togglePush');
+      const desc   = document.getElementById('pushDesc');
+      if (!toggle) return;
+      const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+      if (!supported) {
+        desc.textContent = "Non supporte ici (installez l'app sur iPhone)";
+        toggle.style.opacity = '.4'; toggle.style.pointerEvents = 'none';
+        return;
+      }
+      const b64ToUint8 = (s) => {
+        const pad = '='.repeat((4 - s.length % 4) % 4);
+        const b = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+        return Uint8Array.from([...atob(b)].map((c) => c.charCodeAt(0)));
+      };
+      const ready = async () => {
+        await navigator.serviceWorker.register('/sw.js').catch(() => {});
+        return navigator.serviceWorker.ready;
+      };
+      async function sync() {
+        const r = await ready();
+        const sub = await r.pushManager.getSubscription();
+        if (Notification.permission === 'denied') {
+          desc.textContent = 'Bloquees dans les reglages du navigateur';
+          updateToggle('togglePush', false); return;
+        }
+        const on = !!sub;
+        updateToggle('togglePush', on);
+        desc.textContent = on ? 'Activees sur cet appareil' : 'Activez pour etre prevenu des nouveaux briefs';
+      }
+      let busy = false;
+      toggle.addEventListener('click', async () => {
+        if (busy) return; busy = true;
+        try {
+          const r = await ready();
+          const existing = await r.pushManager.getSubscription();
+          if (existing) {
+            await fetch('/api/push/unsubscribe', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ endpoint: existing.endpoint }),
+            }).catch(() => {});
+            await existing.unsubscribe();
+          } else {
+            const perm = await Notification.requestPermission();
+            if (perm === 'granted') {
+              const { publicKey, enabled } = await (await fetch('/api/push/key')).json();
+              if (enabled && publicKey) {
+                const sub = await r.pushManager.subscribe({
+                  userVisibleOnly: true, applicationServerKey: b64ToUint8(publicKey),
+                });
+                await authFetch('/api/push/subscribe', { method: 'POST', body: JSON.stringify(sub) });
+              }
+            }
+          }
+          await sync();
+        } catch (_) { showAlert('prefsError', 'Erreur notifications.'); }
+        busy = false;
+      });
+      sync();
+    })();
 
     function addEmailRow(val) {
       const list = document.getElementById('emailList');
